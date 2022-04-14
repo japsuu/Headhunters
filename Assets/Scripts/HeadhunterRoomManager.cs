@@ -1,8 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Mirror;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class HeadhunterRoomManager : NetworkRoomManager
 {
@@ -31,13 +34,40 @@ public class HeadhunterRoomManager : NetworkRoomManager
 
     [ReadOnly]
     public string LocalUsername;
+    
+    public static List<Headhunter> AliveHeadhunters;
+    public static List<Player> AliveSurvivors;
+
+    private static uint HeadhunterCount => (NetworkServer.connections.Count / 4 == 0) ? 1 : (uint)NetworkServer.connections.Count / 4;
+
+    private bool gameStarted;
 
     public override void OnRoomStartServer()
     {
         base.OnRoomStartServer();
         
         NetworkServer.RegisterHandler<PlayerJoinMessage>(OnPlayerJoinMessageReceived);
+        
+        AliveHeadhunters = new List<Headhunter>((int)HeadhunterCount);
+        AliveSurvivors = new List<Player>();
     }
+
+    /*private void Update()
+    {
+        if(!gameStarted) return;
+        
+        if(!NetworkServer.active) return;
+        
+        if (AliveHeadhunters.Count <= 0)
+        {
+            Debug.LogWarning("Survivors win");
+        }
+        
+        if (AliveSurvivors.Count <= 0)
+        {
+            Debug.LogWarning("Headhunters win");
+        }
+    }*/
 
     public override void OnRoomClientConnect()
     {
@@ -48,7 +78,7 @@ public class HeadhunterRoomManager : NetworkRoomManager
 
     private void OnPlayerJoinMessageReceived(NetworkConnection conn, PlayerJoinMessage msg)
     {
-        Debug.Log("Received join message for connection " + conn.connectionId);
+        //Debug.Log("Received join message for connection " + conn.connectionId);
         
         conn.authenticationData = new PlayerData(msg.Username, false);
     }
@@ -58,7 +88,13 @@ public class HeadhunterRoomManager : NetworkRoomManager
         if (sceneName == GameplayScene)
         {
             // Select the random headhunters.
-            GameManager.SelectRandomHeadhunters();
+            SelectRandomHeadhunters();
+
+            gameStarted = true;
+        }
+        else
+        {
+            gameStarted = false;
         }
     }
 
@@ -69,7 +105,11 @@ public class HeadhunterRoomManager : NetworkRoomManager
         // Check if the player is a headhunter
         if (data.IsHeadhunter)
         {
-            GameManager.SetHeadhunterObject(gamePlayer);
+            AliveHeadhunters.Add(gamePlayer.GetComponent<Headhunter>());
+        }
+        else
+        {
+            AliveSurvivors.Add(gamePlayer.GetComponent<Player>());
         }
 
         return true;
@@ -109,6 +149,8 @@ public class HeadhunterRoomManager : NetworkRoomManager
 
     private IEnumerator I_RespawnPlayerAsHeadhunter(NetworkConnectionToClient conn, Player player, float delay)
     {
+        OnPlayerKilled(player);
+        
         // Destroy the old player obj
         NetworkServer.Destroy(player.gameObject);
 
@@ -141,5 +183,42 @@ public class HeadhunterRoomManager : NetworkRoomManager
         conn.authenticationData = data;
         
         NetworkServer.ReplacePlayerForConnection(conn, gamePlayer, true);
+    }
+
+    /// <summary>
+    /// Picks the specified amount of headhunters form the connected players.
+    /// </summary>
+    private static void SelectRandomHeadhunters()
+    {
+        List<int> headhunters = new List<int>();
+
+        while (headhunters.Count < HeadhunterCount)
+        {
+            int rnd = Random.Range(0, NetworkServer.connections.Count);
+
+            NetworkConnectionToClient conn = NetworkServer.connections.ElementAt(rnd).Value;
+
+            int id = conn.connectionId;
+            
+            if(headhunters.Contains(id)) continue;
+            
+            headhunters.Add(id);
+            PlayerData data = (PlayerData) conn.authenticationData;
+            data.IsHeadhunter = true;
+            conn.authenticationData = data;
+        }
+    }
+
+    [Server]
+    public static void OnPlayerKilled(Player player)
+    {
+        if (player.sync_isHeadhunter)
+        {
+            AliveHeadhunters.Remove(player.GetComponent<Headhunter>());
+        }
+        else
+        {
+            AliveSurvivors.Remove(player);
+        }
     }
 }

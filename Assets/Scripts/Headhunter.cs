@@ -54,17 +54,6 @@ public class Headhunter : NetworkBehaviour
         LocalHeadhunter = this;
     }
 
-    public IEnumerator OnCorpseConsumed(Corpse target)
-    {
-        player.DisableInput();
-        
-        yield return new WaitForSecondsRealtime(4);
-        
-        target.OnConsumed();
-        
-        player.EnableInput();
-    }
-
     public IEnumerator EnableTransitionsAfter(float delay)
     {
         yield return new WaitForSecondsRealtime(delay);
@@ -107,11 +96,8 @@ public class Headhunter : NetworkBehaviour
                     throw new ArgumentOutOfRangeException(nameof(player.sync_currentHeadhunterState));
             }
             
-            Debug.Log($"CurrentState= {player.sync_currentHeadhunterState}, Target= {targetState}");
-
             if (targetState != player.sync_currentHeadhunterState)
             {
-                Debug.Log("Command called");
                 Command_HeadhunterTransitionTo(targetState);
             }
         }
@@ -120,20 +106,17 @@ public class Headhunter : NetworkBehaviour
     [Command]
     private void Command_HeadhunterTransitionTo(HeadhunterState targetState)
     {
-        Debug.Log("Command_HeadhunterTransitionTo");
         Rpc_HeadhunterTransitionTo(targetState);
     }
     
     [ClientRpc]
     private void Rpc_HeadhunterTransitionTo(HeadhunterState targetState)
     {
-        Debug.Log("Rpc_HeadhunterTransitionTo");
         StartCoroutine(ChangeHeadhunterStateTo(targetState));
     }
 
     private IEnumerator ChangeHeadhunterStateTo(HeadhunterState targetState)
     {
-        Debug.Log("ChangeHeadhunterStateTo");
         canTransition = false;
         player.sync_currentHeadhunterState = targetState;
         

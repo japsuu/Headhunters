@@ -6,7 +6,7 @@ using Mirror;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-public class Corpse : NetworkBehaviour, IInteractable
+public class Corpse : NetworkedConsumable, IInteractable
 {
     [SerializeField]
     [Tooltip("Time after the corpse rots, and cannot be eaten anymore.")]
@@ -16,10 +16,16 @@ public class Corpse : NetworkBehaviour, IInteractable
     [Tooltip("Time after the corpse de-spawns from the world.")]
     private float despawnTime = 600;
 
+    [SerializeField]
+    private string freshModelRoot = "Fresh";
+
+    [SerializeField]
+    private string rottenModelRoot = "Rotten";
+
     private float timeAlive;
 
     [SyncVar(hook = nameof(SetRotten))]
-    private bool isRotten;
+    private bool sync_isRotten;
     
     private Transform freshModel;
     private Transform rottenModel;
@@ -27,8 +33,8 @@ public class Corpse : NetworkBehaviour, IInteractable
     private void Start()
     {
         Transform modelRoot = transform.Find("Model");
-        freshModel = modelRoot.Find("Fresh");
-        rottenModel = modelRoot.Find("Rotten");
+        freshModel = modelRoot.Find(freshModelRoot);
+        rottenModel = modelRoot.Find(rottenModelRoot);
     }
 
     private void FixedUpdate()
@@ -40,9 +46,9 @@ public class Corpse : NetworkBehaviour, IInteractable
             NetDestroy();
         }
         
-        if (!isRotten && timeAlive > rotTime)
+        if (!sync_isRotten && timeAlive > rotTime)
         {
-            isRotten = true;
+            sync_isRotten = true;
             
             freshModel.gameObject.SetActive(false);
             rottenModel.gameObject.SetActive(true);
@@ -59,40 +65,29 @@ public class Corpse : NetworkBehaviour, IInteractable
 
     public string GetInteractText()
     {
-        return CanBeInteractedWith() ? "Consume" : "I'm going to eat that!";
+        return CanBeInteractedWith() ? "Eat" : "That's rotten!";
     }
 
     public void Interact()
     {
-        Command_ConsumeCorpse();
-
-        StartCoroutine(Headhunter.LocalHeadhunter.OnCorpseConsumed(this));
+        Consume();
     }
 
     public bool CanBeInteractedWith()
     {
-        return Player.LocalPlayer.sync_isHeadhunter && !isRotten;
+        return Player.LocalPlayer.sync_isHeadhunter && !sync_isRotten;
     }
     
-    
-    [Command(requiresAuthority = false)]
-    private void Command_ConsumeCorpse()
+    protected override void OnConsumeStart(float time)
     {
-        Rpc_HeadhunterConsumeCorpse();
-    }
-    
-    [ClientRpc]
-    private void Rpc_HeadhunterConsumeCorpse()
-    {
-        //TODO: Play animation
+        //TODO: Play animations
     }
 
-    [Command(requiresAuthority = false)]
-    public void OnConsumed()
+    protected override void OnConsumeEnd()
     {
-        NetDestroy();
+        
     }
-
+    
     private void NetDestroy()
     {
         NetworkServer.Destroy(gameObject);

@@ -107,6 +107,7 @@ public class Player : NetworkBehaviour, IInteractable
         Player,
         Hunger,
         Thirst,
+        Consumable,
         Server,
         Unknown
     }
@@ -114,6 +115,7 @@ public class Player : NetworkBehaviour, IInteractable
     public enum HealSource
     {
         Regeneration,
+        Consumable,
         Server,
         Unknown
     }
@@ -225,7 +227,7 @@ public class Player : NetworkBehaviour, IInteractable
             Debug.LogError("Multiple local players set?");
         
         LocalPlayer = this;
-        Debug.Log("Local player set");
+        //Debug.Log("Local player set");
         
         // Notify the player of their role with an UI popup
         IngameUIManager.Singleton.OnPlayerSpawn();
@@ -242,7 +244,7 @@ public class Player : NetworkBehaviour, IInteractable
         // Initialize the vitals data
         Server_InitializeVitals();
         
-        Debug.Log("Init userData for " + data.Name);
+        //Debug.Log("Init userData for " + data.Name);
     }
 
     /// <summary>
@@ -338,6 +340,7 @@ public class Player : NetworkBehaviour, IInteractable
         }
     }
     
+    [Server]
     private float Server_GetThisFrameSaturationCost()
     {
         return CurrentlyInHeadhunterState ?
@@ -349,6 +352,7 @@ public class Player : NetworkBehaviour, IInteractable
                 SurvivorSaturationBaseDepletion) * Time.fixedDeltaTime;
     }
 
+    [Server]
     private float Server_GetThisFrameHydrationCost()
     {
         return CurrentlyInHeadhunterState ?
@@ -360,16 +364,24 @@ public class Player : NetworkBehaviour, IInteractable
                 SurvivorHydrationBaseDepletion) * Time.fixedDeltaTime;
     }
 
+    [Client]
     public void DisableInput()
     {
+        if(isLocalPlayer)
+            Debug.Log("DisableInput()");
+        
         InputEnabled = false;
         movementInput.isInputEnabled = false;
         lookInput.isInputEnabled = false;
         InteractionManager.Singleton.interactionEnabled = false;
     }
 
+    [Client]
     public void EnableInput()
     {
+        if(isLocalPlayer)
+            Debug.Log("EnableInput()");
+        
         InputEnabled = true;
         movementInput.isInputEnabled = true;
         lookInput.isInputEnabled = true;
@@ -394,9 +406,13 @@ public class Player : NetworkBehaviour, IInteractable
     }
 
     [Server]
-    private void Server_Damage(DamageSource source, float amount)
+    public void Server_Damage(DamageSource source, float amount)
     {
         // Ran on the server.
+        
+        // Only accept positive values
+        if (amount < 0) amount = Mathf.Abs(amount);
+        
 
         latestDamageSource = source;
 
@@ -418,6 +434,9 @@ public class Player : NetworkBehaviour, IInteractable
     public void Command_Damage(DamageSource source, NetworkConnectionToClient sender = null)
     {
         float amount = 0;
+        
+        // Only accept positive values
+        if (amount < 0) amount = Mathf.Abs(amount);
 
         if (sender == null)
         {
@@ -454,7 +473,7 @@ public class Player : NetworkBehaviour, IInteractable
     {
         latestDamageSource = source;
         
-        Debug.Log($"Player damaged {amount} HP by {latestDamageSource}");
+        //Debug.Log($"Player damaged {amount} HP by {latestDamageSource}");
     }
 
     /// <summary>
@@ -463,9 +482,12 @@ public class Player : NetworkBehaviour, IInteractable
     /// <param name="source">Origin of the heal action</param>
     /// <param name="amount">Amount to heal.</param>
     [Server]
-    private void Server_Heal(HealSource source, float amount)
+    public void Server_Heal(HealSource source, float amount)
     {
         // Called by the server, ran on the server.
+
+        // Only accept positive values
+        if (amount < 0) amount = Mathf.Abs(amount);
 
         latestHealSource = source;
         
@@ -481,6 +503,7 @@ public class Player : NetworkBehaviour, IInteractable
     /// <exception cref="ArgumentOutOfRangeException">If healSource is invalid.</exception>
     [Client]
     [Command]
+    [Obsolete("Inherit NetworkedConsumable class instead.")]
     public void Command_Heal(HealSource source)
     {
         // Called by owner client, ran on the server.
@@ -513,8 +536,32 @@ public class Player : NetworkBehaviour, IInteractable
         
         latestHealSource = source;
         
-        if(source != HealSource.Regeneration)
-            Debug.Log($"Player healed {amount} HP from {latestHealSource}");
+        //if(source != HealSource.Regeneration)
+        //    Debug.Log($"Player healed {amount} HP from {latestHealSource}");
+    }
+
+    /// <summary>
+    /// Called by the server internally, to change the saturation of the player the given amount.
+    /// </summary>
+    /// <param name="amount">Amount to change saturation.</param>
+    [Server]
+    public void Server_Eat(float amount)
+    {
+        // Called by the server, ran on the server.
+
+        sync_currentSaturation = Mathf.Max(0, Mathf.Min(sync_maxSaturation, sync_currentSaturation + amount));
+    }
+
+    /// <summary>
+    /// Called by the server internally, to change the hydration of the player the given amount.
+    /// </summary>
+    /// <param name="amount">Amount to change hydration.</param>
+    [Server]
+    public void Server_Drink(float amount)
+    {
+        // Called by the server, ran on the server.
+
+        sync_currentHydration = Mathf.Max(0, Mathf.Min(sync_maxHydration, sync_currentHydration + amount));
     }
 
     [Server]
@@ -522,7 +569,7 @@ public class Player : NetworkBehaviour, IInteractable
     {
         // Called by the server, ran on the server.
         
-        Debug.LogWarning("Player has died of " + latestDamageSource);
+        //Debug.LogWarning("Player has died of " + latestDamageSource);
         
         ((HeadhunterRoomManager) NetworkManager.singleton).RespawnPlayerAsHeadhunter(connectionToClient, this, s_afterDeathRespawnTime);
     }

@@ -98,8 +98,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  destroyAfterConsumed: 1
+  disableInputWhileConsumed: 1
+  onlyHeadhuntersCanConsume: 1
+  consumeTime: 4
+  healthEffect: 0
+  saturationEffect: 40
+  hydrationEffect: -20
+  isCurrentlyBeingConsumed: 0
   rotTime: 60
   despawnTime: 600
+  freshModelRoot: Fresh
+  rottenModelRoot: Rotten
 --- !u!114 &6416170453434372114
 MonoBehaviour:
   m_ObjectHideFlags: 0
