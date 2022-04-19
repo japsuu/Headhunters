@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -58,13 +59,15 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
                 // Get and display the UI text if the interactable is different from last frame.
                 if (lastFrameInteractable != interactable || canInteract != lastFrameCouldInteract)
                 {
-                    string interactText = interactable.GetInteractText();
-
-                    string text = canInteract ? interactText + $" [{interactKey.ToString()}]" : interactText;
                     
-                    if(!string.IsNullOrEmpty(interactText))
-                        IngameUIManager.Singleton.SetInteractText(text);
                 }
+                
+                string interactText = interactable.GetInteractText();
+
+                // If can be interacted with, add the key prompt
+                string text = canInteract ? interactText + $" [{interactKey.ToString()}]" : interactText;
+                    
+                IngameUIManager.Singleton.SetInteractText(text);
 
                 lastFrameCouldInteract = canInteract;
             }

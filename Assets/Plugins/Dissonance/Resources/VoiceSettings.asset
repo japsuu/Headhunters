@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14ff1e06e7b92144eab69e290022edef, type: 3}
   m_Name: VoiceSettings
   m_EditorClassIdentifier: 
-  _quality: 1
+  _quality: 2
   _frameSize: 1
   _forwardErrorCorrection: 1
-  _denoiseAmount: 1
+  _denoiseAmount: 2
   _bgSoundRemovalEnabled: 0
   _bgSoundRemovalAmount: 0.65
-  _vadSensitivity: 1
+  _vadSensitivity: 0
   _aecAmount: 2
   _aecDelayAgnostic: 1
   _aecExtendedFilter: 1

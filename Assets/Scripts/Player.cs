@@ -231,6 +231,9 @@ public class Player : NetworkBehaviour, IInteractable
         
         // Notify the player of their role with an UI popup
         IngameUIManager.Singleton.OnPlayerSpawn();
+        
+        // Initialize the voice chat
+        VoiceChatController.Singleton.OnLocalPlayerSpawned(sync_isHeadhunter);
     }
 
     public override void OnStartServer()

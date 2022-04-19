@@ -40,7 +40,7 @@ public class HeadhunterRoomManager : NetworkRoomManager
 
     private static uint HeadhunterCount => (NetworkServer.connections.Count / 4 == 0) ? 1 : (uint)NetworkServer.connections.Count / 4;
 
-    private bool gameStarted;
+    //private bool gameStarted;
 
     public override void OnRoomStartServer()
     {
@@ -90,11 +90,11 @@ public class HeadhunterRoomManager : NetworkRoomManager
             // Select the random headhunters.
             SelectRandomHeadhunters();
 
-            gameStarted = true;
+            //gameStarted = true;
         }
         else
         {
-            gameStarted = false;
+            //gameStarted = false;
         }
     }
 
