@@ -16,20 +16,36 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
     public float interactDistance = 3;
 
     [ReadOnly]
-    public bool interactionEnabled = true;
+    public bool InteractionEnabled { get; private set; }
 
     private IInteractable lastFrameInteractable;
-    private bool lastFrameCouldInteract;
     private Ray debugInteractionRay;
+
+    private void Awake()
+    {
+        InteractionEnabled = true;
+    }
+
+    public void SetInteractionEnabled(bool isEnabled)
+    {
+        InteractionEnabled = isEnabled;
+
+        lastFrameInteractable = null;
+    }
 
     private void Update()
     {
-        if(!interactionEnabled || Player.LocalPlayer == null)
+        if(!InteractionEnabled || Player.LocalPlayer == null)
         {
-            IngameUIManager.Singleton.SetInteractText("");
+            IngameUIManager.Singleton.SetInteractTextVisible(false);
             return;
         }
 
+        InteractionUpdate();
+    }
+
+    private void InteractionUpdate()
+    {
         Transform playerCameraTransform = Player.LocalPlayer.InteractionCam.transform;
         Ray camForward = new Ray(playerCameraTransform.position, playerCameraTransform.forward);
         debugInteractionRay = camForward;
@@ -55,21 +71,17 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
                         interactable.Interact();
                     }
                 }
-                
-                // Get and display the UI text if the interactable is different from last frame.
-                if (lastFrameInteractable != interactable || canInteract != lastFrameCouldInteract)
+
+                // If we are targeting a different entity from last frame
+                if (interactable != lastFrameInteractable)
                 {
+                    string interactText = interactable.GetInteractText();
+
+                    // If can be interacted with, add the key prompt
+                    string text = canInteract ? interactText + $" [{interactKey.ToString()}]" : interactText;
                     
+                    IngameUIManager.Singleton.SetInteractText(text);
                 }
-                
-                string interactText = interactable.GetInteractText();
-
-                // If can be interacted with, add the key prompt
-                string text = canInteract ? interactText + $" [{interactKey.ToString()}]" : interactText;
-                    
-                IngameUIManager.Singleton.SetInteractText(text);
-
-                lastFrameCouldInteract = canInteract;
             }
             else
             {

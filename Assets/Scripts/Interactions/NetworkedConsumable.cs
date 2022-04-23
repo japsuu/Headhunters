@@ -62,7 +62,6 @@ public class NetworkedConsumable : NetworkBehaviour
         localClientRequested = true;
     }
 
-    //WARN: The requester might always be the server, as server owns consumable objects.
     [Command(requiresAuthority = false)]
     private void Command_RequestConsumeAction(NetworkConnectionToClient requester = null)
     {

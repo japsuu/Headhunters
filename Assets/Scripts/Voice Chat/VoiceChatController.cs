@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Dissonance;
 using UnityEngine;
 
@@ -12,16 +10,24 @@ public class VoiceChatController : SingletonBehaviour<VoiceChatController>
     [SerializeField]
     private string survivorVoiceToken = "Survivor";
     
+    [SerializeField]
     private DissonanceComms voiceComms;
+    
+    [SerializeField]
+    private VoiceBroadcastTrigger headhunterBroadcastTrigger;
 
-    private void Awake()
+    public Action<bool> OnLocalPlayerSpeakChanged;
+
+    private bool wasSpeakingLastFrame;
+
+    private void Update()
     {
-        voiceComms = FindObjectOfType<DissonanceComms>();
-
-        if (voiceComms == null)
+        if (wasSpeakingLastFrame != headhunterBroadcastTrigger.IsTransmitting)
         {
-            Debug.LogError("Cannot find DissonanceComms in the scene!");
+            OnLocalPlayerSpeakChanged?.Invoke(headhunterBroadcastTrigger.IsTransmitting);
         }
+
+        wasSpeakingLastFrame = headhunterBroadcastTrigger.IsTransmitting;
     }
 
     public void OnLocalPlayerSpawned(bool isHeadhunter)
