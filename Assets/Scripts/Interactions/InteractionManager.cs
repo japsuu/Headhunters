@@ -44,6 +44,13 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
         InteractionUpdate();
     }
 
+    private void LateUpdate()
+    {
+        if(Player.LocalPlayer == null) return;
+        
+        
+    }
+
     private void InteractionUpdate()
     {
         Transform playerCameraTransform = Player.LocalPlayer.InteractionCam.transform;
@@ -63,6 +70,9 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
 
             if (interactable != null)
             {
+                //WARN: TODO: Make sure the interact text can not leave the screen rect!!!
+                IngameUIManager.Singleton.SetInteractTextPosition(Player.LocalPlayer.InteractionCam, hit.collider.transform.position);
+                
                 bool canInteract = interactable.CanBeInteractedWith();
                 if (canInteract)
                 {

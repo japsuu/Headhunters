@@ -53,13 +53,13 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 0}
-  - m_Name: Input_x
+  - m_Name: Velocity_x
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 0}
-  - m_Name: Input_y
+  - m_Name: Velocity_z
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -123,42 +123,50 @@ BlendTree:
   - serializedVersion: 2
     m_Motion: {fileID: -203655887218126122, guid: ef331b2088f7c744f997f084f3312386, type: 3}
     m_Threshold: -0.00000044703484
-    m_Position: {x: 0, y: 1}
+    m_Position: {x: 0, y: 2}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: Blend
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: 79039384652c5164087f25b0299b32a8, type: 3}
+    m_Motion: {fileID: -203655887218126122, guid: f34c9c50ca77b914fb98ac327996592c, type: 3}
     m_Threshold: -0.00000009462237
-    m_Position: {x: 0, y: -1}
+    m_Position: {x: 0, y: -2}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: Blend
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: ef331b2088f7c744f997f084f3312386, type: 3}
+    m_Motion: {fileID: -203655887218126122, guid: 427c6fdd628d4c64aa6af3c66fa55f5b, type: 3}
     m_Threshold: 0.00000025629998
-    m_Position: {x: -1, y: 0}
+    m_Position: {x: -2, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: Blend
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: ef331b2088f7c744f997f084f3312386, type: 3}
+    m_Motion: {fileID: -203655887218126122, guid: d1a689cf70ba86245abcadd25a92a275, type: 3}
     m_Threshold: 0.0000006072223
-    m_Position: {x: 1, y: 0}
+    m_Position: {x: 2, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: Blend
     m_Mirror: 0
-  m_BlendParameter: Input_x
-  m_BlendParameterY: Input_y
+  - serializedVersion: 2
+    m_Motion: {fileID: -203655887218126122, guid: 21569bec9e9ec554cbeca662b7a4af63, type: 3}
+    m_Threshold: 0.0000009581447
+    m_Position: {x: 0, y: 4}
+    m_TimeScale: 1
+    m_CycleOffset: 0
+    m_DirectBlendParameter: Blend
+    m_Mirror: 0
+  m_BlendParameter: Velocity_x
+  m_BlendParameterY: Velocity_z
   m_MinThreshold: -0.002045858
-  m_MaxThreshold: 0.0000006072223
+  m_MaxThreshold: 0.0000009581447
   m_UseAutomaticThresholds: 0
   m_NormalizedBlendValues: 0
-  m_BlendType: 1
+  m_BlendType: 2
 --- !u!1109 &8463547043984151003
 AnimatorTransition:
   m_ObjectHideFlags: 1

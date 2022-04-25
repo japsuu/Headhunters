@@ -1113,9 +1113,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  walkSpeed: 2
+  baseWalkSpeed: 7
   airControlRate: 2
-  jumpSpeed: 10
+  jumpSpeed: 5
   jumpDuration: 0.2
   airFriction: 0.5
   groundFriction: 100
@@ -1124,9 +1124,10 @@ MonoBehaviour:
   slopeLimit: 80
   useLocalMomentum: 0
   cameraTransform: {fileID: 2062290351190265280}
+  walkSpeed: 2
   sprintSpeed: 4
-  IsWalking: 0
-  IsSprinting: 0
+  sideStrafeSprintSpeed: 3
+  sideStrafeFactor: 0.75
 --- !u!114 &7568886198354613145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1143,7 +1144,6 @@ MonoBehaviour:
   syncInterval: 0.1
   targetAnimator: {fileID: 1342727018186372573}
   blendSmoothing: 0.075
-  rawInput: 0
 --- !u!114 &5538496702366676972
 MonoBehaviour:
   m_ObjectHideFlags: 0

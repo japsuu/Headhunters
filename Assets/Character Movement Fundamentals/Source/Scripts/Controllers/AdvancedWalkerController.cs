@@ -22,7 +22,8 @@ namespace CMF
 		bool jumpKeyIsPressed = false;
 
 		//Movement speed;
-		public float walkSpeed = 7f;
+		[HideInInspector]
+		public float baseWalkSpeed = 7f;
 
 		//How fast the controller can change direction while in the air;
 		//Higher values result in more air control;
@@ -213,7 +214,7 @@ namespace CMF
 			Vector3 _velocity = CalculateMovementDirection();
 
 			//Multiply (normalized) velocity with movement speed;
-			_velocity *= walkSpeed;
+			_velocity *= baseWalkSpeed;
 
 			return _velocity;
 		}
@@ -391,7 +392,7 @@ namespace CMF
 				Vector3 _movementVelocity = CalculateMovementVelocity();
 
 				//If controller has received additional momentum from somewhere else;
-				if(_horizontalMomentum.magnitude > walkSpeed)
+				if(_horizontalMomentum.magnitude > baseWalkSpeed)
 				{
 					//Prevent unwanted accumulation of speed in the direction of the current momentum;
 					if(VectorMath.GetDotProduct(_movementVelocity, _horizontalMomentum.normalized) > 0f)
@@ -406,7 +407,7 @@ namespace CMF
 				{
 					//Clamp _horizontal velocity to prevent accumulation of speed;
 					_horizontalMomentum += _movementVelocity * Time.deltaTime * airControlRate;
-					_horizontalMomentum = Vector3.ClampMagnitude(_horizontalMomentum, walkSpeed);
+					_horizontalMomentum = Vector3.ClampMagnitude(_horizontalMomentum, baseWalkSpeed);
 				}
 			}
 

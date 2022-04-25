@@ -65,6 +65,9 @@ public class IngameUIManager : SingletonBehaviour<IngameUIManager>
     [SerializeField]
     private float roleDisplayDelayTime = 2;
 
+    [SerializeField]
+    private float interactionTextWorldSpaceSmoothness = 0.2f;
+    
     private void Awake()
     {
         roleDisplayText.alpha = 0;
@@ -131,6 +134,12 @@ public class IngameUIManager : SingletonBehaviour<IngameUIManager>
     {
         SetInteractTextVisible(true);
         interactText.text = text;
+    }
+
+    public void SetInteractTextPosition(Camera targetingCamera, Vector3 targetWorldPos)
+    {
+        Vector3 screenPos = targetingCamera.WorldToScreenPoint(targetWorldPos);
+        interactText.rectTransform.position = Vector3.Lerp(screenPos, interactText.rectTransform.position, Time.deltaTime * interactionTextWorldSpaceSmoothness);
     }
 
     public void SetInteractTextVisible(bool visible)

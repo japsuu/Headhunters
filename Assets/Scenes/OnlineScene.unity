@@ -1551,6 +1551,7 @@ MonoBehaviour:
   roleDisplayFadeTime: 2
   roleDisplayShowTime: 2
   roleDisplayDelayTime: 2
+  interactionTextWorldSpaceSmoothness: 100
 --- !u!4 &997166927
 Transform:
   m_ObjectHideFlags: 0

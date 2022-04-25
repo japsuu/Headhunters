@@ -17,39 +17,39 @@ public class NetworkMovementAnimator : NetworkBehaviour
     [SerializeField]
     private float blendSmoothing = 0.075f;
 
-    [SerializeField]
-    private bool rawInput;
+    private MovementController movementController;
 
-    private static readonly int InputX = Animator.StringToHash("Input_x");
-    private static readonly int InputY = Animator.StringToHash("Input_y");
+    private static readonly int VelocityX = Animator.StringToHash("Velocity_x");
+    private static readonly int VelocityY = Animator.StringToHash("Velocity_z");
+
+    private void Awake()
+    {
+        movementController = GetComponentInChildren<MovementController>();
+    }
 
     private void Update()
     {
         if (!isLocalPlayer) return;
         
-        Vector2 input = rawInput ?
-            new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) :
-            new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-        
-        Cmd_SendInput(input);
+        Cmd_SendVelocity(movementController.InputVelocity);
     }
     
     [Command(channel = Channels.Unreliable)]
-    private void Cmd_SendInput(Vector2 input)
+    private void Cmd_SendVelocity(Vector2 velocity)
     {
-        Rpc_ReceiveInput(input);
+        Rpc_ReceiveVelocity(velocity);
     }
 
     [ClientRpc(includeOwner = false)]
-    private void Rpc_ReceiveInput(Vector2 input)
+    private void Rpc_ReceiveVelocity(Vector2 velocity)
     {
-        OnInputReceived(input);
+        OnVelocityReceived(velocity);
     }
 
-    private void OnInputReceived(Vector2 input)
+    private void OnVelocityReceived(Vector2 velocity)
     {
         //TODO: Set the animation speed based on the velocity
-        targetAnimator.SetFloat(InputX, input.x, blendSmoothing, Time.deltaTime);
-        targetAnimator.SetFloat(InputY, input.y, blendSmoothing, Time.deltaTime);
+        targetAnimator.SetFloat(VelocityX, velocity.x, blendSmoothing, Time.deltaTime);
+        targetAnimator.SetFloat(VelocityY, velocity.y, blendSmoothing, Time.deltaTime);
     }
 }

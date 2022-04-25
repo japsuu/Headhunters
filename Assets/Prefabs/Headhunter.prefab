@@ -1148,9 +1148,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  walkSpeed: 2
+  baseWalkSpeed: 7
   airControlRate: 2
-  jumpSpeed: 10
+  jumpSpeed: 5
   jumpDuration: 0.2
   airFriction: 0.5
   groundFriction: 100
@@ -1159,9 +1159,10 @@ MonoBehaviour:
   slopeLimit: 80
   useLocalMomentum: 0
   cameraTransform: {fileID: 2062290351190265280}
+  walkSpeed: 2
   sprintSpeed: 4
-  IsWalking: 0
-  IsSprinting: 0
+  sideStrafeSprintSpeed: 3
+  sideStrafeFactor: 0.75
 --- !u!114 &2711981856304948818
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1178,7 +1179,6 @@ MonoBehaviour:
   syncInterval: 0.1
   targetAnimator: {fileID: 38055628976100416}
   blendSmoothing: 0.075
-  rawInput: 0
 --- !u!114 &2028859782864138454
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2364,7 +2364,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: bd374cc80a0ed744fb07e40bf451ccb0, type: 2}
+  - {fileID: 2100000, guid: bc9792f72b9c7534db5430b28b37dbfb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
