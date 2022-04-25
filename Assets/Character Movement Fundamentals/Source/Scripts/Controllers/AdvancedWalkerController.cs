@@ -95,6 +95,8 @@ namespace CMF
 
 		void Update()
 		{
+			if(!isLocalPlayer) return;
+			
 			HandleJumpKeyInput();
 		}
 
@@ -117,6 +119,8 @@ namespace CMF
 
         void FixedUpdate()
 		{
+			if(!isLocalPlayer) return;
+
 			ControllerUpdate();
 		}
 

@@ -1,16 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Mirror;
 using UnityEngine;
 
 namespace CMF
 {
 	//This script rotates a gameobject based on user input.
 	//Rotation around the x-axis (vertical) can be clamped/limited by setting 'upperVerticalLimit' and 'lowerVerticalLimit'.
-	public class CameraController : MonoBehaviour {
+	public class CameraController : MonoBehaviour
+	{
 
 		//Current rotation values (in degrees);
-		float currentXAngle = 0f;
-		float currentYAngle = 0f;
+		protected float currentXAngle;
+		protected float currentYAngle;
 
 		//Upper and lower limits (in degrees) for vertical rotation (along the local x-axis of the gameobject);
 		[Range(0f, 90f)]
@@ -19,14 +19,14 @@ namespace CMF
 		public float lowerVerticalLimit = 60f;
 
 		//Variables to store old rotation values for interpolation purposes;
-		float oldHorizontalInput = 0f;
-		float oldVerticalInput = 0f;
+		private float oldHorizontalInput;
+		private float oldVerticalInput;
 
 		//Camera turning speed; 
 		public float cameraSpeed = 250f;
 
 		//Whether camera rotation values will be smoothed;
-		public bool smoothCameraRotation = false;
+		public bool smoothCameraRotation;
 
 		//This value controls how smoothly the old camera rotation angles will be interpolated toward the new camera rotation angles;
 		//Setting this value to '50f' (or above) will result in no smoothing at all;
@@ -36,8 +36,8 @@ namespace CMF
 		public float cameraSmoothingFactor = 25f;
 
 		//Variables for storing current facing direction and upwards direction;
-		Vector3 facingDirection;
-		Vector3 upwardsDirection;
+		protected Vector3 facingDirection;
+		protected Vector3 upwardsDirection;
 
 		//References to transform and camera components;
 		protected Transform tr;
@@ -45,13 +45,13 @@ namespace CMF
 		protected CameraInput cameraInput;
 
 		//Setup references.
-		void Awake () {
+		private void Awake () {
 			tr = transform;
 			cam = GetComponent<Camera>();
 			cameraInput = GetComponent<CameraInput>();
 
 			if(cameraInput == null)
-				Debug.LogWarning("No camera input script has been attached to this gameobject", this.gameObject);
+				Debug.LogWarning("No camera input script has been attached to this gameObject", this.gameObject);
 
 			//If no camera component has been attached to this gameobject, search the transform's children;
 			if(cam == null)
@@ -73,7 +73,7 @@ namespace CMF
 			
 		}
 
-		void Update()
+		private void Update()
 		{
 			HandleCameraRotation();
 		}
@@ -86,26 +86,26 @@ namespace CMF
 				return;
 
 			//Get input values;
-			float _inputHorizontal = cameraInput.GetHorizontalCameraInput();
-			float _inputVertical = cameraInput.GetVerticalCameraInput();
+			float inputHorizontal = cameraInput.GetHorizontalCameraInput();
+			float inputVertical = cameraInput.GetVerticalCameraInput();
 		
-			RotateCamera(_inputHorizontal, _inputVertical);
+			RotateCamera(inputHorizontal, inputVertical);
 		}
 
 		//Rotate camera; 
-		protected void RotateCamera(float _newHorizontalInput, float _newVerticalInput)
+		protected void RotateCamera(float newHorizontalInput, float newVerticalInput)
 		{
 			if(smoothCameraRotation)
 			{
 				//Lerp input;
-				oldHorizontalInput = Mathf.Lerp (oldHorizontalInput, _newHorizontalInput, Time.deltaTime * cameraSmoothingFactor);
-				oldVerticalInput = Mathf.Lerp (oldVerticalInput, _newVerticalInput, Time.deltaTime * cameraSmoothingFactor);
+				oldHorizontalInput = Mathf.Lerp (oldHorizontalInput, newHorizontalInput, Time.deltaTime * cameraSmoothingFactor);
+				oldVerticalInput = Mathf.Lerp (oldVerticalInput, newVerticalInput, Time.deltaTime * cameraSmoothingFactor);
 			}
 			else
 			{
 				//Replace old input directly;
-				oldHorizontalInput = _newHorizontalInput;
-				oldVerticalInput = _newVerticalInput;
+				oldHorizontalInput = newHorizontalInput;
+				oldVerticalInput = newVerticalInput;
 			}
 
 			//Add input to camera angles;
@@ -119,7 +119,7 @@ namespace CMF
 		}
 
 		//Update camera rotation based on x and y angles;
-		protected void UpdateRotation()
+		protected virtual void UpdateRotation()
 		{
 			tr.localRotation = Quaternion.Euler(new Vector3(0, currentYAngle, 0));
 

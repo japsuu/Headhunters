@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using DG.Tweening;
 using Mirror;
 using UnityEngine;
@@ -9,6 +10,15 @@ using UnityEngine.Rendering.Universal;
 public class Headhunter : NetworkBehaviour
 {
     public static Headhunter LocalHeadhunter;
+
+    [SerializeField]
+    private Material bodyMaterial;
+
+    [SerializeField]
+    private Material jointsMaterial;
+
+    [SerializeField]
+    private Color survivorStateColor = Color.green;
 
     [SerializeField]
     private Color headhunterStateColor = Color.red;
@@ -32,8 +42,6 @@ public class Headhunter : NetworkBehaviour
     /// </summary>
     public float timeUntilCanTransition;
 
-    private Material material;
-
     private Player player;
 
     private bool canTransition;
@@ -49,8 +57,6 @@ public class Headhunter : NetworkBehaviour
 
     private void Awake()
     {
-        material = GetComponentInChildren<MeshRenderer>().material;
-
         player = GetComponent<Player>();
     }
 
@@ -175,8 +181,9 @@ public class Headhunter : NetworkBehaviour
         while (transitionLeft > 0)
         {
             transitionLeft -= Time.deltaTime;
-            
-            material.SetFloat(TransitionProgressProperty, Mathf.Clamp01(1 - transitionLeft / transitionTimeHalved));
+
+            bodyMaterial.SetFloat(TransitionProgressProperty, Mathf.Clamp01(1 - transitionLeft / transitionTimeHalved));
+            jointsMaterial.SetFloat(TransitionProgressProperty, Mathf.Clamp01(1 - transitionLeft / transitionTimeHalved));
 
             yield return null;
         }
@@ -185,10 +192,10 @@ public class Headhunter : NetworkBehaviour
         switch (targetState)
         {
             case HeadhunterState.Headhunter:
-                material.SetColor(BaseColor, headhunterStateColor);
+                bodyMaterial.SetColor(BaseColor, headhunterStateColor);
                 break;
             case HeadhunterState.Survivor:
-                material.SetColor(BaseColor, Color.white);
+                bodyMaterial.SetColor(BaseColor, survivorStateColor);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(targetState), targetState, null);
@@ -201,7 +208,8 @@ public class Headhunter : NetworkBehaviour
         {
             transitionLeft -= Time.deltaTime;
 
-            material.SetFloat(TransitionProgressProperty, Mathf.Clamp01(transitionLeft / transitionTimeHalved));
+            bodyMaterial.SetFloat(TransitionProgressProperty, Mathf.Clamp01(transitionLeft / transitionTimeHalved));
+            jointsMaterial.SetFloat(TransitionProgressProperty, Mathf.Clamp01(transitionLeft / transitionTimeHalved));
 
             yield return null;
         }
