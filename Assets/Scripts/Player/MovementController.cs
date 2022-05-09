@@ -6,21 +6,22 @@ using UnityEngine;
 public class MovementController : AdvancedWalkerController
 {
     [SerializeField]
-    public float walkSpeed = 2f;
+    public float walkSpeed = 3f;
     
     [SerializeField]
-    private float sprintSpeed = 4f;
+    private float sprintSpeed = 5f;
     
     [SerializeField]
+    [Tooltip("How fast the player moves while moving sideways. SideStrafeFactor effects this.")]
     private float sideStrafeSprintSpeed = 3f;
     
     [SerializeField]
     [Range(0.01f, 1f)]
+    [Tooltip("How much slower the player always moves in the sideways direction.")]
     private float sideStrafeFactor = 0.75f;
 
     public bool IsWalking { get; private set; }
     public bool IsSprinting { get; private set; }
-    public Vector2 InputVelocity { get; private set; }
     
     private InputController inputController;
     
@@ -72,17 +73,13 @@ public class MovementController : AdvancedWalkerController
         IsWalking = new Vector2(worldSpaceVelocity.x, worldSpaceVelocity.z).magnitude > 0.1f;
         IsSprinting = IsWalking && inputController.IsSprinting();
 
-        InputVelocity = new Vector2(
-            inputController.GetHorizontalMovementInput(),
-            inputController.GetVerticalMovementInput());
-
         float multiplier;
 
         //Multiply (normalized) velocity with correct movement speed:
         
         if (inputController.IsSprinting())  // IF sprint key held
         {
-            if (InputVelocity.y > 0)        // IF moving forward
+            if (inputController.GetVerticalMovementInput() > 0)        // IF moving forward
             {
                 multiplier = sprintSpeed;   // Move at sprint speed
             }
@@ -95,14 +92,14 @@ public class MovementController : AdvancedWalkerController
         {
             multiplier = walkSpeed;         // Move at walk speed
             
-            if (InputVelocity.y < 0)        // IF moving backwards
+            if (inputController.GetVerticalMovementInput() < 0)        // IF moving backwards
             {
                 multiplier *= sideStrafeFactor;     // Move at walkSpeed * sideStrafeFactor speed
             }
         }
         
         worldSpaceVelocity *= multiplier;
-        InputVelocity *= multiplier;
+        //InputVelocity *= multiplier;
 
         return worldSpaceVelocity;
     }

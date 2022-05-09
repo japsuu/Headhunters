@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc11085a92c864a4e86dd419fed227d5, type: 3}
+  m_Name: Headhunters Piece Collection
+  m_EditorClassIdentifier: 
+  Pieces:
+  - {fileID: 4655047922861027894, guid: a95cf30c6a937184ca9834825f2c0cb6, type: 3}
+  - {fileID: 8770602269925399149, guid: c48150a1caec88741b7b788e8392688d, type: 3}
+  - {fileID: -7945508380665816788, guid: 823927d770d6bf74eadb3948e7df66bc, type: 3}
+  - {fileID: -6093457587730040955, guid: d6ebdbe22b5e19044a4794b19b1181a4, type: 3}
+  - {fileID: 8477222944609242209, guid: a6ec4259542cfdc49870d6dcd74da1c5, type: 3}
+  - {fileID: 6446998088823187932, guid: 685a78e969ec9a640a0082195f698aa6, type: 3}
+  - {fileID: 592635047158155466, guid: 8f761e4e3bd02f54cbff50d85076a4e1, type: 3}
+  - {fileID: 7264853459237214344, guid: d010b0e30d64ce846be7b626d9b9e451, type: 3}

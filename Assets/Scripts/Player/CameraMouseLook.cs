@@ -10,7 +10,12 @@ public class CameraMouseLook : CameraController
     [SerializeField]
     private Transform bodyRootTransform;
 
-    public float CurrentXAngle => currentXAngle;
+    [SerializeField]
+    private float lookAtTargetDistance = 10;
+
+    public Vector3 LookAtTarget { get; private set; }
+
+    //public float CurrentXAngle => currentXAngle;
 
     protected override void UpdateRotation()
     {
@@ -23,5 +28,7 @@ public class CameraMouseLook : CameraController
         tr.localRotation = Quaternion.Euler(new Vector3(currentXAngle, 0, 0));
         
         bodyRootTransform.rotation = Quaternion.Euler(new Vector3(bodyRootTransform.eulerAngles.x, currentYAngle, bodyRootTransform.eulerAngles.z));
+
+        LookAtTarget = transform.position + transform.forward * lookAtTargetDistance;
     }
 }

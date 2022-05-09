@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
 {
@@ -43,6 +44,13 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
                 return m_Singleton;
             }
         }
+    }
+
+
+    //WARN: Untested quick fix for m_shuttingDown staying on even after rejoining game
+    private void OnEnable()
+    {
+        m_ShuttingDown = false;
     }
 
 

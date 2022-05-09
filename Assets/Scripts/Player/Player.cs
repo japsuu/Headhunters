@@ -8,24 +8,6 @@ using Random = UnityEngine.Random;
 
 public class Player : NetworkBehaviour, IInteractable
 {
-    /*
-     
-    [Command]
-    public void Command_ClientToServer()
-    {
-        // Executed on the server
-        
-        Rpc_ServerToClient();
-    }
-    
-    [ClientRpc]
-    private void Rpc_ServerToClient()
-    {
-        // Executed on all clients
-    }
-    
-    */
-    
     /// <summary>
     /// The local player instance.
     /// </summary>
@@ -35,12 +17,28 @@ public class Player : NetworkBehaviour, IInteractable
     [Tooltip("Spawned when a player is killed")]
     public GameObject s_corpsePrefab;
 
+    [HideInInspector]
+    public NetworkInventory inventory;
+
+    [HideInInspector]
+    public HeadIKApplier headIK;
+
+    [SerializeField]
+    private Camera interactionCam;
+
+    public Camera InteractionCam => interactionCam;
+
     /// <summary>
     /// Child Transform of this player to spawn the corpse to.
     ///
     /// Only used on server.
     /// </summary>
     public Transform s_corpseSpawnpoint;
+
+    /// <summary>
+    /// Transform which determines where the spear will be held.
+    /// </summary>
+    public Transform spearHoldTransform;
 
     /// <summary>
     /// Time it takes to respawn after dying.
@@ -123,8 +121,6 @@ public class Player : NetworkBehaviour, IInteractable
     private InputController movementInput;
     private Rigidbody rb;
     private CameraMouseInput lookInput;
-
-    public Camera InteractionCam { get; private set; }
     private DamageSource latestDamageSource;
     private HealSource latestHealSource;
 
@@ -178,6 +174,23 @@ public class Player : NetworkBehaviour, IInteractable
     public float sync_maxHydration;
     [SyncVar]
     public float sync_currentHydration;
+    
+    public static Player GetPlayerOfConnection(NetworkConnectionToClient target)
+    {
+        if (target == null)
+        {
+            return null;
+        }
+        
+        Player player = target.identity.GetComponent<Player>();
+        if (player == null)
+        {
+            Debug.LogWarning("Could not find Player object for connection " + target.connectionId);
+            return null;
+        }
+
+        return player;
+    }
 
     private void Awake()
     {
@@ -186,7 +199,8 @@ public class Player : NetworkBehaviour, IInteractable
         movementInput = GetComponent<InputController>();
         rb = GetComponentInChildren<Rigidbody>();
         lookInput = GetComponentInChildren<CameraMouseInput>();
-        InteractionCam = GetComponentInChildren<Camera>();
+        inventory = GetComponent<NetworkInventory>();
+        headIK = GetComponentInChildren<HeadIKApplier>();
     }
 
     private void Start()
@@ -194,7 +208,7 @@ public class Player : NetworkBehaviour, IInteractable
         // Set the layer to "Interactable" if remote player.
         if(isLocalPlayer) return;
 
-        gameObject.layer = LayerMask.NameToLayer("Interactable");
+        gameObject.layer = LayerMask.NameToLayer("RemotePlayer");
     }
 
     public override void OnStartLocalPlayer()
@@ -205,18 +219,25 @@ public class Player : NetworkBehaviour, IInteractable
         
         LocalPlayer = this;
         //Debug.Log("Local player set");
+
+        gameObject.tag = "LocalPlayer";
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         
         // Notify the player of their role with an UI popup
         IngameUIManager.Singleton.OnPlayerSpawn();
         
         // Initialize the voice chat
         VoiceChatController.Singleton.OnLocalPlayerSpawned(sync_isHeadhunter);
+        
+        //CarriableController.Singleton.LocalClient_RegisterCarryPoints(carryPoints);
     }
 
     public override void OnStartServer()
     {
         // Load the data of the owner client and assign it to the SyncVars
-        PlayerData data = (PlayerData) connectionToClient.authenticationData;
+        Headhunters.Networking.PlayerData data = (Headhunters.Networking.PlayerData) connectionToClient.authenticationData;
         
         sync_isHeadhunter = data.IsHeadhunter;
         sync_username = data.Name;
@@ -435,17 +456,15 @@ public class Player : NetworkBehaviour, IInteractable
                 throw new ArgumentOutOfRangeException(nameof(source), source, null);
         }
 
-        latestDamageSource = source;
-
-        sync_currentHealth -= Mathf.Max(0, amount);
-        
-        Target_OnDamaged(source, amount);
+        Server_Damage(source, amount);
     }
 
     [TargetRpc]
     private void Target_OnDamaged(DamageSource source, float amount)
     {
         latestDamageSource = source;
+        
+        PostProcessingController.Singleton.OnPlayerDamaged();
         
         //Debug.Log($"Player damaged {amount} HP by {latestDamageSource}");
     }

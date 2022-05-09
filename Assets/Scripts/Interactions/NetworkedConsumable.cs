@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using Mirror;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(NetworkIdentity))]
 public class NetworkedConsumable : NetworkBehaviour
@@ -15,8 +16,9 @@ public class NetworkedConsumable : NetworkBehaviour
     private bool canBeUsedByMultipleSimultaneously;
     [SerializeField]
     private bool onlyHeadhuntersCanConsume;
+    [FormerlySerializedAs("onlySurvivorsReceiveEffects")]
     [SerializeField]
-    private bool onlySurvivorsReceiveEffects;
+    private bool onlySurvivorsReceiveSaturationEffects;
     [SerializeField]
     private bool willRenew;
     [SerializeField]
@@ -109,16 +111,15 @@ public class NetworkedConsumable : NetworkBehaviour
         yield return new WaitForSecondsRealtime(consumeTime);
 
         // Only give the wanted effects to players who should get them
-        if (!onlySurvivorsReceiveEffects || onlySurvivorsReceiveEffects && !requestingPlayer.sync_isHeadhunter)
-        {
-            if(healthEffect > 0)
-                requestingPlayer.Server_Heal(Player.HealSource.Consumable, healthEffect);
-            else
-                requestingPlayer.Server_Damage(Player.DamageSource.Consumable, healthEffect);
+        if(healthEffect > 0)
+            requestingPlayer.Server_Heal(Player.HealSource.Consumable, healthEffect);
+        else
+            requestingPlayer.Server_Damage(Player.DamageSource.Consumable, healthEffect);
         
+        if (!onlySurvivorsReceiveSaturationEffects || onlySurvivorsReceiveSaturationEffects && !requestingPlayer.sync_isHeadhunter)
             requestingPlayer.Server_Eat(saturationEffect);
-            requestingPlayer.Server_Drink(hydrationEffect);
-        }
+        
+        requestingPlayer.Server_Drink(hydrationEffect);
 
 
         if(!canBeUsedByMultipleSimultaneously)

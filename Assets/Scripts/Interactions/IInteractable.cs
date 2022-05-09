@@ -1,4 +1,6 @@
-﻿public interface IInteractable
+﻿using UnityEngine;
+
+public interface IInteractable
 {
     /// <summary>
     /// Returns the text that will be showed on the UI when this object if targeted.

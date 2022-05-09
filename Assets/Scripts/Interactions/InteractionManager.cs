@@ -71,7 +71,7 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
             if (interactable != null)
             {
                 //WARN: TODO: Make sure the interact text can not leave the screen rect!!!
-                IngameUIManager.Singleton.SetInteractTextPosition(Player.LocalPlayer.InteractionCam, hit.collider.transform.position);
+                IngameUIManager.Singleton.SetInteractTextPosition(Player.LocalPlayer.InteractionCam, hit.collider.bounds.center);
                 
                 bool canInteract = interactable.CanBeInteractedWith();
                 if (canInteract)
@@ -82,16 +82,17 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
                     }
                 }
 
-                // If we are targeting a different entity from last frame
+                /* If we are targeting a different entity from last frame
                 if (interactable != lastFrameInteractable)
                 {
-                    string interactText = interactable.GetInteractText();
-
-                    // If can be interacted with, add the key prompt
-                    string text = canInteract ? interactText + $" [{interactKey.ToString()}]" : interactText;
                     
-                    IngameUIManager.Singleton.SetInteractText(text);
-                }
+                }*/
+                string interactText = interactable.GetInteractText();
+
+                // If can be interacted with, add the key prompt
+                string text = canInteract ? interactText + $" [{interactKey.ToString()}]" : interactText;
+                    
+                IngameUIManager.Singleton.SetInteractText(text);
             }
             else
             {

@@ -9,32 +9,43 @@ using UnityEngine;
 /// </summary>
 public class HeadNetworkAnimator : NetworkBehaviour
 {
+    //[SerializeField]
+    //private Transform headTransform;
+
     [SerializeField]
-    private Transform headTransform;
-
+    private bool useIK = true;
+    
     private CameraMouseLook mouseLook;
+    private HeadIKApplier headIK;
+    
+    //private Vector3 headInitialOffset;
 
-    private Vector3 headInitialOffset;
-
-    private float latestHeadXAngle;
+    //private float latestHeadXAngle;
 
     private void Awake()
     {
         mouseLook = GetComponentInChildren<CameraMouseLook>();
+        headIK = GetComponentInChildren<HeadIKApplier>();
+
+        if (headIK == null)
+        {
+            Debug.LogWarning("No HeadIKApplier found. Disabling head IK.");
+            useIK = false;
+        }
     }
 
-    private void Start()
-    {
-        headInitialOffset = headTransform.localEulerAngles;
-    }
+    //private void Start()
+    //{
+    //    headInitialOffset = headTransform.localEulerAngles;
+    //}
 
     private void Update()
     {
         if(isLocalPlayer)
-            Cmd_SendHeadXAngle(mouseLook.CurrentXAngle);
+            Cmd_SendLookAtTarget(mouseLook.LookAtTarget);
     }
 
-    private void LateUpdate()
+    /*private void LateUpdate()
     {
         if(isLocalPlayer) return;
         
@@ -46,22 +57,26 @@ public class HeadNetworkAnimator : NetworkBehaviour
             localEulerAngles.z));
         
         ApplyHeadRotation(latestHeadRotation);
-    }
+    }*/
 
     [Command(channel = Channels.Unreliable)]
-    private void Cmd_SendHeadXAngle(float xAngle)
+    private void Cmd_SendLookAtTarget(Vector3 target)
     {
-        Rpc_ReceiveHeadXAngle(xAngle);
+        Rpc_ReceiveLookAtTarget(target);
     }
 
     [ClientRpc(includeOwner = false)]
-    private void Rpc_ReceiveHeadXAngle(float xAngle)
+    private void Rpc_ReceiveLookAtTarget(Vector3 target)
     {
-        latestHeadXAngle = xAngle;
+        // Only apply IK to remote/other players
+        if(isLocalPlayer) return;
+        
+        headIK.UseIK = useIK;
+        headIK.LatestLookAtTarget = target;
     }
 
-    private void ApplyHeadRotation(Quaternion rot)
-    {
-        headTransform.localRotation = rot;
-    }
+    //private void ApplyHeadRotation(Quaternion rot)
+    //{
+    //    headTransform.localRotation = rot;
+    //}
 }

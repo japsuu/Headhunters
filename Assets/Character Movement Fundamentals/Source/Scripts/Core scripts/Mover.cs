@@ -54,7 +54,7 @@ namespace CMF
 
 		//References to attached components;
 		private Collider col;
-		private Rigidbody rig;
+		public Rigidbody rb;
 		private Transform tr;
 		private Sensor sensor;
 
@@ -97,13 +97,13 @@ namespace CMF
 				col = GetComponent<Collider>();
 			}
 
-			rig = GetComponent<Rigidbody>();
+			rb = GetComponent<Rigidbody>();
 
 			//If no rigidbody is attached to this gameobject, add a rigidbody;
-			if(rig == null)
+			if(rb == null)
 			{
 				tr.gameObject.AddComponent<Rigidbody>();
-				rig = GetComponent<Rigidbody>();
+				rb = GetComponent<Rigidbody>();
 			}
 
 			boxCollider = GetComponent<BoxCollider>();
@@ -111,8 +111,8 @@ namespace CMF
 			capsuleCollider = GetComponent<CapsuleCollider>();
 
 			//Freeze rigidbody rotation and disable rigidbody gravity;
-			rig.freezeRotation = true;
-			rig.useGravity = false;
+			rb.freezeRotation = true;
+			rb.useGravity = false;
 		}
 
 		//Draw debug information if debug mode is enabled;
@@ -319,7 +319,7 @@ namespace CMF
 		//Set mover velocity;
 		public void SetVelocity(Vector3 _velocity)
 		{
-			rig.velocity = _velocity + currentGroundAdjustmentVelocity;	
+			rb.velocity = _velocity + currentGroundAdjustmentVelocity;	
 		}	
 
 		//Returns 'true' if mover is touching ground and the angle between hte 'up' vector and ground normal is not too steep (e.g., angle < slope_limit);
