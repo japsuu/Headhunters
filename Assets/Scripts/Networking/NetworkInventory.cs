@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Headhunters.Networking.Interactions;
 using Mirror;
 using UnityEngine;
@@ -21,10 +22,18 @@ public class NetworkInventory : NetworkBehaviour
     [SerializeField]
     private KeyCode dropItemKey = KeyCode.C;
 
-    [SyncVar]
-    public NetworkCarriableBase sync_currentCarriableInHand;
+    //[SyncVar]
+    //public NetworkCarriableBase sync_currentCarriableInHand;
 
+    public readonly SyncList<NetworkCarriableBase> currentlyCarriedItems = new();
     private Dictionary<uint, CarryPoint> carryPoints;
+    private CarryPoint mainHandPoint;
+    private CarryPoint offHandPoint;
+
+    public CarryPoint GetCarryPointByID(uint carryPointID)
+    {
+        return carryPoints[carryPointID];
+    }
 
     private void Start()
     {
@@ -32,6 +41,26 @@ public class NetworkInventory : NetworkBehaviour
         foreach (CarryPoint carryPoint in GetComponentsInChildren<CarryPoint>())
         {
             carryPoints.Add(carryPoint.ID, carryPoint);
+
+            if (carryPoint.location == CarryLocation.MainHand)
+            {
+                if (mainHandPoint != null)
+                    Debug.LogWarning("Multiple MainHands set!");
+
+                mainHandPoint = carryPoint;
+            }
+            if (carryPoint.location == CarryLocation.OffHand)
+            {
+                if (offHandPoint != null)
+                    Debug.LogWarning("Multiple OffHands set!");
+
+                offHandPoint = carryPoint;
+            }
+        }
+
+        if (carryPoints.Count < 1)
+        {
+            Debug.LogWarning($"Could not find any CarryPoints for {gameObject.name}");
         }
     }
 
@@ -46,23 +75,47 @@ public class NetworkInventory : NetworkBehaviour
         LocalInventory = this;
     }
 
-    public static NetworkInventory GetInventoryOfConnection(NetworkConnectionToClient target)
+    public static NetworkInventory GetInventoryOfConnection(NetworkConnection target)
     {
-        Player player = Player.GetPlayerOfConnection(target);
+        Player player = Player.Server_GetPlayerOfConnection(target);
 
         if (player == null)
         {
             return null;
         }
 
-        return player.inventory;
+        return player.Inventory;
     }
 
-    public static bool LocalInventoryContainsAnyOfMaterialTag(List<string> materialTags)
+    public static NetworkInventory GetInventoryOfNetID(uint netID)
     {
-        return
-            LocalInventory.sync_currentCarriableInHand != null && 
-            materialTags.Contains(LocalInventory.sync_currentCarriableInHand.materialTag);
+        return NetworkClient.spawned[netID].gameObject.GetComponent<Player>().Inventory;
+    }
+
+    public bool InventoryContainsAnyOfMaterialTags(List<string> materialTags)
+    {
+        foreach (NetworkCarriableBase item in currentlyCarriedItems)
+        {
+            if (materialTags.Contains(item.materialTag))
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool InventoryContainsAnyOfMaterialTags(List<string> materialTags, out NetworkCarriableBase firstMatch)
+    {
+        foreach (NetworkCarriableBase item in currentlyCarriedItems)
+        {
+            if (materialTags.Contains(item.materialTag))
+            {
+                firstMatch = item;
+                return true;
+            }
+        }
+
+        firstMatch = null;
+        return false;
     }
 
     [Command(requiresAuthority = true)]
@@ -85,28 +138,75 @@ public class NetworkInventory : NetworkBehaviour
 
         // Check if we can get the player component of the requester.
         // This should never fail, unless the requesting player is dead.
-        Player requestingPlayer = Player.GetPlayerOfConnection(requester);
+        Player requestingPlayer = Player.Server_GetPlayerOfConnection(requester);
 
         if (requestingPlayer == null)
             return;
 
         // Return early if item cannot be picked up when in headhunter state.
-        if (!item.canBeCarriedWhileHeadhunter && requestingPlayer.sync_currentHeadhunterState == Headhunter.HeadhunterState.Headhunter)
+        if (!item.canBeCarriedWhileHeadhunter && requestingPlayer.CurrentlyInHeadhunterState)
         {
             return;
         }
 
-        // Drop the currently carried item.
-        if (sync_currentCarriableInHand != null)
+        if (mainHandPoint == null)
         {
-            Server_DropCarriedItem();
+            Debug.LogWarning("MainHand CarryPoint missing!");
+            return;
+        }
+
+        if (offHandPoint == null)
+        {
+            Debug.LogWarning("OffHand CarryPoint missing!");
+            return;
+        }
+
+        CarryPoint offHandCarryPoint = null;
+        CarryPoint mainHandCarryPoint = null;
+        CarryPoint firstAvailableInventoryCarryPoint = null;
+        
+        // If item can be carried in OffHand, check for a free hand.
+        if(item.CarryLocation.HasFlag(CarryLocation.OffHand) && !offHandPoint.HasCarriable)
+        {
+            offHandCarryPoint = offHandPoint;
         }
         
-        Server_PickupItem(item, requester);
+        // If item can be carried in MainHand, check for a free hand.
+        if(item.CarryLocation.HasFlag(CarryLocation.MainHand) && !mainHandPoint.HasCarriable)
+        {
+            mainHandCarryPoint = mainHandPoint;
+        }
+
+        foreach (CarryPoint carryPoint in carryPoints.Values)
+        {
+            if (carryPoint.HasCarriable) continue;
+            if (item.PreferPickupToMainHand && carryPoint.location == CarryLocation.MainHand) continue;
+            if (item.PreferPickupToOffHand && carryPoint.location == CarryLocation.OffHand) continue;
+            if (!item.CarryLocation.HasFlag(carryPoint.location)) continue;
+            
+            firstAvailableInventoryCarryPoint = carryPoint;
+            break;
+        }
+
+        if (item.PreferPickupToMainHand && mainHandCarryPoint != null)
+        {
+            Server_PickupItem(item, mainHandCarryPoint, requester);
+            return;
+        }
+        if (item.PreferPickupToOffHand && offHandCarryPoint != null)
+        {
+            Server_PickupItem(item, offHandCarryPoint, requester);
+            return;
+        }
+        if(firstAvailableInventoryCarryPoint != null)
+        {
+            Server_PickupItem(item, firstAvailableInventoryCarryPoint, requester);
+            return;
+        }
     }
 
     [Command(requiresAuthority = true)]
-    public void Cmd_TryDropCarriedItem(NetworkConnectionToClient requester = null)
+    public void Cmd_TryDropHandItem(NetworkConnectionToClient requester = null)
     {
         // Check if the connection is valid.
         if (requester == null)
@@ -116,8 +216,14 @@ public class NetworkInventory : NetworkBehaviour
         }
         
         // If not carrying an item currently, return.
-        NetworkCarriableBase carriedItem = sync_currentCarriableInHand;
-        if(carriedItem == null) return;
+        NetworkCarriableBase carriedItem = mainHandPoint.CurrentlyCarriedItem;
+        if(carriedItem == null)
+        {
+            carriedItem = offHandPoint.CurrentlyCarriedItem;
+            
+            if(carriedItem == null)
+                return;
+        }
 
         // Check that the item is being carried.
         if (!carriedItem.sync_isCarriedCurrently)
@@ -127,7 +233,7 @@ public class NetworkInventory : NetworkBehaviour
             return;
         }
 
-        Server_DropCarriedItem();
+        Server_DropItem(carriedItem);
     }
 
     [Command(requiresAuthority = true)]
@@ -141,13 +247,22 @@ public class NetworkInventory : NetworkBehaviour
         }
         
         // If not carrying an item currently, return.
-        NetworkCarriableBase carriedItem = sync_currentCarriableInHand;
-        if(carriedItem == null) return;
+        NetworkCarriableBase carriedItem = mainHandPoint.CurrentlyCarriedItem;
+        if(carriedItem == null)
+        {
+            carriedItem = offHandPoint.CurrentlyCarriedItem;
+            
+            if(carriedItem == null)
+            {
+                Debug.Log("Not carrying anything");
+                return;
+            }
+        }
 
         // Check that the item is being carried.
         if (!carriedItem.sync_isCarriedCurrently)
         {
-            Debug.LogWarning("De-sync / possible cheater detected: Connection " + requester.connectionId + " tried to drop item that isn't carried!");
+            Debug.LogWarning($"De-sync / possible cheater detected: Connection {requester.connectionId} tried to drop item ({carriedItem.name}) that isn't currently carried!");
                 
             return;
         }
@@ -158,42 +273,46 @@ public class NetworkInventory : NetworkBehaviour
             return;
         }
         
-        Server_UseCarriedItem();
+        Server_UseCarriedItem(carriedItem);
     }
 
     [Server]
-    public void Server_DestroyCarriedItem()
+    public void Server_DestroyCarriedItem(NetworkCarriableBase item)
     {
-        if (sync_currentCarriableInHand == null)
+        /*if (sync_currentCarriableInHand == null)
         {
             return;
         }
         
         sync_currentCarriableInHand.Server_Destroy();
-        sync_currentCarriableInHand = null;
+        sync_currentCarriableInHand = null;*/
+
+        currentlyCarriedItems.Remove(item);
+        item.Server_Destroy();
     }
 
     [Server]
-    private void Server_PickupItem(NetworkCarriableBase item, NetworkConnectionToClient requester)
+    private void Server_PickupItem(NetworkCarriableBase item, CarryPoint carryPoint, NetworkConnectionToClient requester)
     {
         // Assign obj authority to requester
         item.netIdentity.RemoveClientAuthority();
         item.netIdentity.AssignClientAuthority(requester);
 
         // Set SyncVars
-        sync_currentCarriableInHand = item;
+        //if(carryPoint.location == CarryLocation.Hand)
+        //    sync_currentCarriableInHand = item;
         item.sync_isCarriedCurrently = true;
+        currentlyCarriedItems.Add(item);
         
         // Call functions on the carriable
         item.Server_AfterCarryStart();
         item.Rpc_Owner_AfterCarryStart(requester);
-        item.Rpc_Client_AfterCarryStart();
+        item.Rpc_Client_AfterCarryStart(carryPoint.ID, requester.identity.netId);
     }
 
     [Server]
-    public void Server_DropCarriedItem()
+    public void Server_DropItem(NetworkCarriableBase carriedItem)
     {
-        NetworkCarriableBase carriedItem = sync_currentCarriableInHand;
         if(carriedItem == null) return;
         
         // Get the owner/current carrier of the item
@@ -204,7 +323,8 @@ public class NetworkInventory : NetworkBehaviour
         
         // Set SyncVars
         carriedItem.sync_isCarriedCurrently = false;
-        sync_currentCarriableInHand = null;
+        //sync_currentCarriableInHand = null;
+        currentlyCarriedItems.Remove(carriedItem);
         
         // Call functions on the carriable
         carriedItem.Server_AfterCarryStop();
@@ -213,9 +333,32 @@ public class NetworkInventory : NetworkBehaviour
     }
 
     [Server]
-    public void Server_UseCarriedItem()
+    public void Server_DropAllItems()
     {
-        NetworkCarriableBase carriedItem = sync_currentCarriableInHand;
+        foreach (NetworkCarriableBase carriedItem in currentlyCarriedItems)
+        {
+            if(carriedItem == null) return;
+        
+            // Get the owner/current carrier of the item
+            NetworkConnectionToClient owner = carriedItem.netIdentity.connectionToClient;
+        
+            // Remove obj authority
+            carriedItem.netIdentity.RemoveClientAuthority();
+        
+            // Set SyncVars
+            carriedItem.sync_isCarriedCurrently = false;
+            currentlyCarriedItems.Remove(carriedItem);
+        
+            // Call functions on the carriable
+            carriedItem.Server_AfterCarryStop();
+            carriedItem.Rpc_Owner_AfterCarryStopped(owner);
+            carriedItem.Rpc_Client_AfterCarryStopped();
+        }
+    }
+
+    [Server]
+    public void Server_UseCarriedItem(NetworkCarriableBase carriedItem)
+    {
         if(carriedItem == null) return;
         
         // Get the owner/current carrier of the item
@@ -225,11 +368,16 @@ public class NetworkInventory : NetworkBehaviour
         
         // Remove obj authority
         if(carriedItem.removeAuthorityOnUse)
+        {
             carriedItem.netIdentity.RemoveClientAuthority();
-        
-        // Set SyncVars
-        carriedItem.sync_isCarriedCurrently = false;
-        sync_currentCarriableInHand = null;
+        }
+
+        if (carriedItem.removeFromInventoryOnUse)
+        {
+            carriedItem.sync_isCarriedCurrently = false;
+            
+            currentlyCarriedItems.Remove(carriedItem);
+        }
         
         // Call functions on the carriable
         carriedItem.Server_AfterUsed();
@@ -243,43 +391,9 @@ public class NetworkInventory : NetworkBehaviour
         {
             if (Input.GetKeyDown(dropItemKey))
             {
-                if(sync_currentCarriableInHand != null)
-                    Cmd_TryDropCarriedItem();
+                if(mainHandPoint.CurrentlyCarriedItem != null || offHandPoint.CurrentlyCarriedItem != null)
+                    Cmd_TryDropHandItem();
             }
         }
     }
-
-    /*
-    //WARN: NetworkCarriableBase?
-    public NetworkCarriable currentlyCarriedItem;
-
-    //TODO: Function that takes a netID as input, converts that into a NetworkCarriable, if null, error/return. Mirrors that same netID to clients to assign.
-    [Server]
-    public void Server_EquipCarriable(uint carriableNetID, NetworkConnectionToClient requester = null)
-    {
-        
-    }
-
-    [ClientRpc]
-    private void Rpc_OnStartedCarrying(uint carriableNetID)
-    {
-        if (isLocalPlayer)
-        {
-            
-        }
-
-        if (NetworkClient.spawned.TryGetValue(carriableNetID, out NetworkIdentity networkIdentity))
-        {
-            NetworkCarriable carriable = networkIdentity.GetComponent<NetworkCarriable>();
-
-            if (carriable == null)
-            {
-                Debug.LogError("Remote client tried to carry non existent carriable.");
-            }
-        }
-        else
-        {
-            Debug.LogError("Remote client tried to carry non existent carriable.");
-        }
-    }*/
 }

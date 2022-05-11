@@ -35,10 +35,8 @@ public class Spear : NetworkCarriableObject
     private const float FovResetTime = 1f;
     private int server_throwingPlayerID;
 
-    protected override void Update()
+    protected void Update()
     {
-        base.Update();
-
         if (Local_IsHeld)
         {
             // Start aiming with LMB down
@@ -56,7 +54,7 @@ public class Spear : NetworkCarriableObject
             }
 
             // Throw with LMB up
-            if (isAiming && Input.GetMouseButtonUp(0))
+            if (Input.GetMouseButtonUp(0))
             {
                 NetworkInventory.LocalInventory.Cmd_TryUseCarriedItem();
                 
@@ -87,7 +85,6 @@ public class Spear : NetworkCarriableObject
         }
     }
 
-    //TODO: Parent the model to the collision target. When unparented, teleport the root object to the model (?).
     private void OnCollisionEnter(Collision other)
     {
         Player hitPlayer = other.gameObject.GetComponent<Player>();
@@ -99,7 +96,7 @@ public class Spear : NetworkCarriableObject
             
             if (hitPlayer.netIdentity.connectionToClient.connectionId == server_throwingPlayerID) return;
 
-            hitPlayer.Server_Damage(Player.DamageSource.Player, mainRb.velocity.magnitude);
+            hitPlayer.Vitals.Server_Damage(PlayerDamageSource.Player, mainRb.velocity.magnitude);
 
             mainRb.velocity /= 4;
         }
@@ -109,6 +106,8 @@ public class Spear : NetworkCarriableObject
 
     public override void Client_AfterUsed()
     {
+        base.Client_AfterUsed();
+        
         EnablePhysics();
     }
 
@@ -146,9 +145,9 @@ public class Spear : NetworkCarriableObject
         return true;
     }
 
-    protected override void ApplyPositionAndRotation()
+    /*protected override void ApplyPositionAndRotation()
     {
         transform.position = Vector3.Lerp(transform.position, Player.LocalPlayer.spearHoldTransform.position, Time.deltaTime * 15f);
         transform.rotation = Quaternion.Lerp(transform.rotation, Player.LocalPlayer.spearHoldTransform.rotation, Time.deltaTime * 15f);
-    }
+    }*/
 }

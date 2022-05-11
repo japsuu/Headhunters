@@ -309,7 +309,11 @@ MonoBehaviour:
   uiName: spear
   canBeCarriedWhileHeadhunter: 1
   removeAuthorityOnUse: 1
+  removeFromInventoryOnUse: 1
   sync_isCarriedCurrently: 0
+  PickupPreference: 0
+  CarryLocation: 5
+  CurrentlyAssignedCarryPoint: {fileID: 0}
   playerCollisionEnableDelay: 0.2
   dropForceRange: {x: 10, y: 20}
   dropTorqueRange: {x: -70, y: 70}

@@ -20,6 +20,16 @@ public class VoiceChatController : SingletonBehaviour<VoiceChatController>
 
     private bool wasSpeakingLastFrame;
 
+    private void OnEnable()
+    {
+        EventManager.ClientEvents.OnLocalPlayerSpawned.AddListener(OnLocalPlayerSpawned);
+    }
+
+    private void OnDisable()
+    {
+        EventManager.ClientEvents.OnLocalPlayerSpawned.RemoveListener(OnLocalPlayerSpawned);
+    }
+
     private void Update()
     {
         if (wasSpeakingLastFrame != headhunterBroadcastTrigger.IsTransmitting)
@@ -30,7 +40,7 @@ public class VoiceChatController : SingletonBehaviour<VoiceChatController>
         wasSpeakingLastFrame = headhunterBroadcastTrigger.IsTransmitting;
     }
 
-    public void OnLocalPlayerSpawned(bool isHeadhunter)
+    private void OnLocalPlayerSpawned(bool isHeadhunter)
     {
         voiceComms.AddToken(isHeadhunter ? headhunterVoiceToken : survivorVoiceToken);
     }

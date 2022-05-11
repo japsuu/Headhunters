@@ -44,7 +44,7 @@ public class HeadhunterHowlingController : NetworkBehaviour
     private void OnLocalPlayerSpeakChanged(bool isSpeaking)
     {
         // Only growl/howl if in headhunter state
-        if(Player.LocalPlayer.sync_currentHeadhunterState == Headhunter.HeadhunterState.Headhunter)
+        if(Player.LocalPlayer.CurrentlyInHeadhunterState)
             Command_SetHowling(isSpeaking);
     }
     
@@ -96,7 +96,7 @@ public class HeadhunterHowlingController : NetworkBehaviour
         // Called by the server, ran on all clients.
         
         // Only play the howls on survivor clients
-        if(Player.LocalPlayer.sync_isHeadhunter) return;
+        if(Player.LocalPlayer.IsHeadhunter) return;
         
         howlSource.PlayOneShot(howlClips[clipIndex]);
     }

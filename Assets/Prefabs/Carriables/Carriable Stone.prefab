@@ -240,7 +240,12 @@ MonoBehaviour:
   materialTag: stone
   uiName: stone
   canBeCarriedWhileHeadhunter: 1
+  removeAuthorityOnUse: 1
+  removeFromInventoryOnUse: 1
   sync_isCarriedCurrently: 0
+  PickupPreference: 2
+  CarryLocation: 1
+  CurrentlyAssignedCarryPoint: {fileID: 0}
   playerCollisionEnableDelay: 0.2
   dropForceRange: {x: 20, y: 40}
   dropTorqueRange: {x: -200, y: 200}

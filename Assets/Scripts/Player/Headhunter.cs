@@ -118,7 +118,7 @@ public class Headhunter : NetworkBehaviour
         if (Input.GetKeyDown(transitionKey) && canTransition)
         {
             HeadhunterState targetState;
-            switch (player.sync_currentHeadhunterState)
+            switch (player.CurrentHeadhunterState)
             {
                 case HeadhunterState.Headhunter:
                     targetState = HeadhunterState.Survivor;
@@ -127,10 +127,10 @@ public class Headhunter : NetworkBehaviour
                     targetState = HeadhunterState.Headhunter;
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(player.sync_currentHeadhunterState));
+                    throw new ArgumentOutOfRangeException(nameof(player.CurrentHeadhunterState));
             }
             
-            if (targetState != player.sync_currentHeadhunterState)
+            if (targetState != player.CurrentHeadhunterState)
             {
                 Command_HeadhunterTransitionTo(targetState);
             }
@@ -146,7 +146,7 @@ public class Headhunter : NetworkBehaviour
         
         Target_TransitionToState(targetState);
         
-        player.sync_currentHeadhunterState = targetState;
+        player.Server_SetHeadhunterState(targetState);
         
         Rpc_HeadhunterTransitionTo(targetState);
     }

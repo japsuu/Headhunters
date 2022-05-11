@@ -13,8 +13,6 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
     [SerializeField]
     private LayerMask interactLayer;
 
-    public float interactDistance = 3;
-
     [ReadOnly]
     public bool InteractionEnabled { get; private set; }
 
@@ -64,7 +62,7 @@ public class InteractionManager : SingletonBehaviour<InteractionManager>
         //              IF: Interaction key pressed.
         //                  Interact();
         
-        if (Physics.Raycast(camForward, out RaycastHit hit, interactDistance, interactLayer))
+        if (Physics.Raycast(camForward, out RaycastHit hit, Constants.MaxInteractDistance, interactLayer))
         {
             interactable = hit.collider.gameObject.GetComponent<IInteractable>();
 

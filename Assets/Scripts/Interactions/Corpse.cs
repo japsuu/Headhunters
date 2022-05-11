@@ -75,7 +75,7 @@ public class Corpse : NetworkedConsumable, IInteractable
 
     public bool CanBeInteractedWith()
     {
-        return Player.LocalPlayer.sync_isHeadhunter && !sync_isRotten;
+        return Player.LocalPlayer.IsHeadhunter && !sync_isRotten;
     }
     
     protected override void OnConsumeStart(float time)

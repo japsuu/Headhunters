@@ -143,12 +143,12 @@ public class HeadhunterRoomManager : NetworkRoomManager
         return gamePlayer;
     }
 
-    public void RespawnPlayerAsHeadhunter(NetworkConnectionToClient conn, Player player, float delay)
+    public void RespawnPlayerAsHeadhunter(NetworkConnectionToClient conn, Player player)
     {
-        StartCoroutine(I_RespawnPlayerAsHeadhunter(conn, player, delay));
+        StartCoroutine(I_RespawnPlayerAsHeadhunter(conn, player));
     }
 
-    private IEnumerator I_RespawnPlayerAsHeadhunter(NetworkConnectionToClient conn, Player player, float delay)
+    private IEnumerator I_RespawnPlayerAsHeadhunter(NetworkConnectionToClient conn, Player player)
     {
         OnPlayerKilled(player);
         
@@ -156,10 +156,10 @@ public class HeadhunterRoomManager : NetworkRoomManager
         NetworkServer.Destroy(player.gameObject);
 
         // Spawn the corpse
-        GameObject corpse = Instantiate(player.s_corpsePrefab, player.s_corpseSpawnpoint.position, player.s_corpseSpawnpoint.rotation);
+        GameObject corpse = Instantiate(player.CorpsePrefab, player.CorpseSpawnpoint.position, player.CorpseSpawnpoint.rotation);
         NetworkServer.Spawn(corpse);
         
-        yield return new WaitForSecondsRealtime(delay);
+        yield return new WaitForSecondsRealtime(Constants.PlayerRespawnTime);
         
         // get start position from base class
         Transform startPos = GetStartPosition();
@@ -213,9 +213,9 @@ public class HeadhunterRoomManager : NetworkRoomManager
     [Server]
     public static void OnPlayerKilled(Player player)
     {
-        player.inventory.Server_DropCarriedItem();
+        player.Inventory.Server_DropAllItems();
         
-        if (player.sync_isHeadhunter)
+        if (player.IsHeadhunter)
         {
             AliveHeadhunters.Remove(player.GetComponent<Headhunter>());
         }

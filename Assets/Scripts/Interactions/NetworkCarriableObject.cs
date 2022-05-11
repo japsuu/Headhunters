@@ -98,23 +98,24 @@ namespace Headhunters.Networking.Interactions
             Destroy(gameObject);
         }
 
-        public override void Client_AfterCarryStart()
+        public override void Client_AfterCarryStart(uint carryPointID, uint carryingPlayerNetID)
         {
+            base.Client_AfterCarryStart(carryPointID, carryingPlayerNetID);
+            
             DisablePhysics();
-
-            if (!hasAuthority)
-            {
-                gameObject.transform.SetParent(null);
-            }
         }
 
         public override void Client_AfterCarryStop()
         {
+            base.Client_AfterCarryStop();
+            
             EnablePhysics();
         }
 
         public override void Client_AfterDestroyed()
         {
+            base.Client_AfterDestroyed();
+            
             Destroy(gameObject);
         }
 

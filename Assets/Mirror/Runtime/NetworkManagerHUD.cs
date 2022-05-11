@@ -7,7 +7,6 @@ namespace Mirror
     /// <summary>Shows NetworkManager controls in a GUI at runtime.</summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/Network Manager HUD")]
-    [RequireComponent(typeof(NetworkManager))]
     [HelpURL("https://mirror-networking.gitbook.io/docs/components/network-manager-hud")]
     public class NetworkManagerHUD : MonoBehaviour
     {

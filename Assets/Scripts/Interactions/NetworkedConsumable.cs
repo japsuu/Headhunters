@@ -49,7 +49,7 @@ public class NetworkedConsumable : NetworkBehaviour
         if (sync_isCurrentlyBeingConsumed && !canBeUsedByMultipleSimultaneously ||
             requestingPlayer == null ||
             willRenew && sync_needsRenew ||
-            onlyHeadhuntersCanConsume && !requestingPlayer.sync_isHeadhunter)
+            onlyHeadhuntersCanConsume && !requestingPlayer.IsHeadhunter)
         {
             return false;
         }
@@ -112,14 +112,14 @@ public class NetworkedConsumable : NetworkBehaviour
 
         // Only give the wanted effects to players who should get them
         if(healthEffect > 0)
-            requestingPlayer.Server_Heal(Player.HealSource.Consumable, healthEffect);
+            requestingPlayer.Vitals.Server_Heal(PlayerHealSource.Consumable, healthEffect);
         else
-            requestingPlayer.Server_Damage(Player.DamageSource.Consumable, healthEffect);
+            requestingPlayer.Vitals.Server_Damage(PlayerDamageSource.Consumable, healthEffect);
         
-        if (!onlySurvivorsReceiveSaturationEffects || onlySurvivorsReceiveSaturationEffects && !requestingPlayer.sync_isHeadhunter)
-            requestingPlayer.Server_Eat(saturationEffect);
+        if (!onlySurvivorsReceiveSaturationEffects || onlySurvivorsReceiveSaturationEffects && !requestingPlayer.IsHeadhunter)
+            requestingPlayer.Vitals.Server_Eat(saturationEffect);
         
-        requestingPlayer.Server_Drink(hydrationEffect);
+        requestingPlayer.Vitals.Server_Drink(hydrationEffect);
 
 
         if(!canBeUsedByMultipleSimultaneously)

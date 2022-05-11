@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EasyBuildSystem.Features.Scripts.Core.Base.Piece;
 using EasyBuildSystem.Features.Scripts.Core.Base.Piece.Enums;
+using Headhunters.Networking.Interactions;
 using Mirror;
 using UnityEngine;
 
@@ -77,8 +78,7 @@ public class UpgradeableStructure : NetworkBehaviour, IInteractable
         }
         
         // If carrying the wrong material
-        //if (!CarriableController.Singleton.IsAnyMaterialCarriedCurrently(upgradeMaterialTags))
-        if (!NetworkInventory.LocalInventoryContainsAnyOfMaterialTag(upgradeMaterialTags))
+        if (!NetworkInventory.LocalInventory.InventoryContainsAnyOfMaterialTags(upgradeMaterialTags))
         {
             //TODO: Write progression per material
             return $"Progression: {forestAddon.GetCurrentProgression()}/{forestAddon.Elements.Length}.\nUpgrade with {currentUpgradeText}.";
@@ -101,7 +101,7 @@ public class UpgradeableStructure : NetworkBehaviour, IInteractable
             return false;
 
         //if (!CarriableController.Singleton.IsAnyMaterialCarriedCurrently(upgradeMaterialTags))
-        if (!NetworkInventory.LocalInventoryContainsAnyOfMaterialTag(upgradeMaterialTags))
+        if (!NetworkInventory.LocalInventory.InventoryContainsAnyOfMaterialTags(upgradeMaterialTags))
             return false;
 
         return true;
@@ -128,13 +128,15 @@ public class UpgradeableStructure : NetworkBehaviour, IInteractable
     {
         if (pieceBehaviour.CurrentState != StateType.Queue)
             return;
+        
+        Cmd_RequestUpgrade();
 
-        string materialTag = NetworkInventory.LocalInventory.sync_currentCarriableInHand.materialTag;
+        /*string materialTag = NetworkInventory.LocalInventory.sync_currentCarriableInHand.materialTag;
 
         if (upgradeMaterialTags.Contains(materialTag))
         {
             Cmd_RequestUpgrade(materialTag);
-        }
+        }*/
         
         /*if (CarriableController.Singleton.IsAnyMaterialCarriedCurrently(upgradeMaterialTags))
         {
@@ -148,7 +150,7 @@ public class UpgradeableStructure : NetworkBehaviour, IInteractable
     }
 
     [Command(requiresAuthority = false)]
-    private void Cmd_RequestUpgrade(string materialTag, NetworkConnectionToClient requester = null)
+    private void Cmd_RequestUpgrade(NetworkConnectionToClient requester = null)
     {
         // Check if the connection is valid.
         if (requester == null)
@@ -160,11 +162,12 @@ public class UpgradeableStructure : NetworkBehaviour, IInteractable
         NetworkInventory inventory = NetworkInventory.GetInventoryOfConnection(requester);
 
         // Check if the player is actually carrying the item used to upgrade
-        if (inventory.sync_currentCarriableInHand.materialTag != materialTag) return;
+        if (inventory.InventoryContainsAnyOfMaterialTags(upgradeMaterialTags, out NetworkCarriableBase material))
+        {
+            inventory.Server_DestroyCarriedItem(material);
         
-        inventory.Server_DestroyCarriedItem();
-        
-        Rpc_ClientOnUpgrade(materialTag);
+            Rpc_ClientOnUpgrade(material.materialTag);
+        }
     }
 
     [ClientRpc]

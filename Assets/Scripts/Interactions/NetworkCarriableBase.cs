@@ -20,14 +20,20 @@ namespace Headhunters.Networking.Interactions
         [SerializeField]
         public bool removeAuthorityOnUse = true;
 
+        [SerializeField]
+        public bool removeFromInventoryOnUse = true;
+
         [SyncVar]
         [ReadOnly]
         [SerializeField]
         public bool sync_isCarriedCurrently;
 
-        public CarryRestriction CarryRestriction = CarryRestriction.None;
-        public CarryLocation carryLocation = CarryLocation.Waist;
-        public CarryPoint currentlyAssignedCarryPoint;
+        [SerializeField]
+        private ItemPickupPreference PickupPreference;
+        public CarryLocation CarryLocation;
+        public CarryPoint CurrentlyAssignedCarryPoint;
+        public bool PreferPickupToMainHand => CarryLocation.HasFlag(CarryLocation.MainHand) && PickupPreference == ItemPickupPreference.MainHand;
+        public bool PreferPickupToOffHand => CarryLocation.HasFlag(CarryLocation.OffHand) && PickupPreference == ItemPickupPreference.Offhand;
 
         #region ABSTRACT METHODS
 
@@ -70,29 +76,44 @@ namespace Headhunters.Networking.Interactions
         /// Called on owner client when the object is used.
         /// </summary>
         public virtual void Owner_AfterUsed(){}
-        
+
         /// <summary>
         /// Called on all clients when the object is picked up.
         /// </summary>
-        public virtual void Client_AfterCarryStart(){}
-        
+        public virtual void Client_AfterCarryStart(uint carryPointID, uint carryingPlayerNetID)
+        {
+            NetworkInventory.GetInventoryOfNetID(carryingPlayerNetID).GetCarryPointByID(carryPointID).AssignCarriable(this);
+        }
+
         /// <summary>
         /// Called on all clients when the object is dropped.
         /// </summary>
-        public virtual void Client_AfterCarryStop(){}
-        
+        public virtual void Client_AfterCarryStop()
+        {
+            CurrentlyAssignedCarryPoint.UnAssignCarriable();
+        }
+
         /// <summary>
         /// Called on all clients when the object is destroyed.
         /// </summary>
-        public virtual void Client_AfterDestroyed(){}
+        public virtual void Client_AfterDestroyed()
+        {
+            CurrentlyAssignedCarryPoint.UnAssignCarriable();
+        }
 
         /// <summary>
         /// Called on all clients when the object is used.
         /// </summary>
-        public virtual void Client_AfterUsed(){}
+        public virtual void Client_AfterUsed()
+        {
+            if (removeFromInventoryOnUse)
+            {
+                CurrentlyAssignedCarryPoint.UnAssignCarriable();
+            }
+        }
 
         /// <summary>
-        /// Inheritable condition that defines if the carriable can be used currently.
+        /// Inheritable serverside condition that defines if the carriable can be used currently.
         /// </summary>
         /// <returns></returns>
         [Server]
@@ -121,8 +142,7 @@ namespace Headhunters.Networking.Interactions
             if (sync_isCarriedCurrently) return false;
             
             // False if player is currently headhunter and cannot be carried while in headhunter state
-            if (Player.LocalPlayer.sync_currentHeadhunterState == Headhunter.HeadhunterState.Headhunter &&
-                !canBeCarriedWhileHeadhunter) return false;
+            if (Player.LocalPlayer.CurrentlyInHeadhunterState && !canBeCarriedWhileHeadhunter) return false;
 
             return true;
         }
@@ -138,9 +158,9 @@ namespace Headhunters.Networking.Interactions
         }
         
         [ClientRpc]
-        public void Rpc_Client_AfterCarryStart()
+        public void Rpc_Client_AfterCarryStart(uint carryPointID, uint carryingPlayerNetID)
         {
-            Client_AfterCarryStart();
+            Client_AfterCarryStart(carryPointID, carryingPlayerNetID);
         }
 
         [TargetRpc]
@@ -197,14 +217,14 @@ namespace Headhunters.Networking.Interactions
 
         #endregion
 
-        protected virtual void Update()
+        /*protected virtual void Update()
         {
-            /*if (!hasAuthority || !sync_isCarriedCurrently) return;
+            if (!hasAuthority || !sync_isCarriedCurrently) return;
             
-            ApplyPositionAndRotation();*/
+            ApplyPositionAndRotation();
         }
 
-        /*[Client]
+        [Client]
         protected virtual void ApplyPositionAndRotation()
         {
             transform.position = Vector3.Lerp(transform.position, NetworkInventory.LocalInventory.localCarryPoint.position, Time.deltaTime * 15f);

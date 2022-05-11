@@ -25,7 +25,7 @@ public class CarryPoint : MonoBehaviour
 
     [ReadOnly]
     [OdinSerialize]
-    private NetworkCarriableBase currentlyCarriedItem;
+    public NetworkCarriableBase CurrentlyCarriedItem { get; private set; }
 
     private SmoothSyncMirror[] smooths;
 
@@ -35,8 +35,8 @@ public class CarryPoint : MonoBehaviour
     /// <param name="carriable"></param>
     public void AssignCarriable(NetworkCarriableBase carriable)
     {
-        currentlyCarriedItem = carriable;
-        carriable.currentlyAssignedCarryPoint = this;
+        CurrentlyCarriedItem = carriable;
+        carriable.CurrentlyAssignedCarryPoint = this;
 
         smooths = carriable.GetComponents<SmoothSyncMirror>();
         
@@ -59,20 +59,36 @@ public class CarryPoint : MonoBehaviour
         {
             foreach (SmoothSyncMirror smooth in smooths)
             {
-                smooth.enabled = false;
+                smooth.enabled = true;
+                smooth.clearBuffer();
             }
         }
 
-        currentlyCarriedItem.currentlyAssignedCarryPoint = null;
-        currentlyCarriedItem = null;
+        CurrentlyCarriedItem.CurrentlyAssignedCarryPoint = null;
+        CurrentlyCarriedItem = null;
         HasCarriable = false;
     }
 
     private void Update()
     {
-        if(currentlyCarriedItem == null) return;
+        if(CurrentlyCarriedItem == null) return;
         
-        currentlyCarriedItem.transform.position = transform.position;
-        currentlyCarriedItem.transform.rotation = transform.rotation;
+        CurrentlyCarriedItem.transform.position = transform.position;
+        CurrentlyCarriedItem.transform.rotation = transform.rotation;
+    }
+
+    private void Reset()
+    {
+        List<CarryPoint> otherPoints = new();
+        otherPoints.AddRange(transform.root.GetComponentsInChildren<CarryPoint>());
+
+        uint currentHighestID = 0;
+
+        foreach (CarryPoint point in otherPoints)
+        {
+            if (point.ID > currentHighestID) currentHighestID = point.ID;
+        }
+
+        ID = currentHighestID + 1;
     }
 }

@@ -241,7 +241,12 @@ MonoBehaviour:
   materialTag: log
   uiName: log
   canBeCarriedWhileHeadhunter: 1
+  removeAuthorityOnUse: 1
+  removeFromInventoryOnUse: 1
   sync_isCarriedCurrently: 0
+  PickupPreference: 0
+  CarryLocation: 3
+  CurrentlyAssignedCarryPoint: {fileID: 0}
   playerCollisionEnableDelay: 0.2
   dropForceRange: {x: 20, y: 40}
   dropTorqueRange: {x: -100, y: 100}

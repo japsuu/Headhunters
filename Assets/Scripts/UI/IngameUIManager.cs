@@ -77,37 +77,46 @@ public class IngameUIManager : SingletonBehaviour<IngameUIManager>
         statsPanelRoot.SetActive(false);
         modeSwitchTimeLeftSlider.gameObject.SetActive(false);
     }
+    
+    private void OnEnable()
+    {
+        EventManager.ClientEvents.OnLocalPlayerSpawned.AddListener(OnLocalPlayerSpawned);
+        EventManager.ClientEvents.OnLocalPlayerDied.AddListener(NotifyPlayerOfDeath);
+    }
+
+    private void OnDisable()
+    {
+        EventManager.ClientEvents.OnLocalPlayerSpawned.RemoveListener(OnLocalPlayerSpawned);
+        EventManager.ClientEvents.OnLocalPlayerDied.RemoveListener(NotifyPlayerOfDeath);
+    }
 
     private void Update()
     {
         if(Player.LocalPlayer == null) return;
         
         // Update the UI sliders
-        healthSlider.value = Player.LocalPlayer.sync_currentHealth;
-        hydrationSlider.value = Player.LocalPlayer.sync_currentHydration;
-        saturationSlider.value = Player.LocalPlayer.sync_currentSaturation;
+        healthSlider.value = Player.LocalPlayer.Vitals.sync_currentHealth;
+        hydrationSlider.value = Player.LocalPlayer.Vitals.sync_currentHydration;
+        saturationSlider.value = Player.LocalPlayer.Vitals.sync_currentSaturation;
 
-        if (Player.LocalPlayer.sync_isHeadhunter)
+        if (Player.LocalPlayer.IsHeadhunter)
         {
             modeSwitchTimeLeftSlider.value = Headhunter.LocalHeadhunter.timeUntilCanTransition;
         }
     }
-
-    /// <summary>
-    /// Called from Player.cs on Start().
-    /// </summary>
-    public void OnPlayerSpawn()
+    
+    private void OnLocalPlayerSpawned(bool isHeadhunter)
     {
         StartCoroutine(RevealRole());
         
         statsPanelRoot.SetActive(true);
 
         // Set the UI sliders' max values
-        healthSlider.maxValue = Player.LocalPlayer.sync_maxHealth;
-        hydrationSlider.maxValue = Player.LocalPlayer.sync_maxHydration;
-        saturationSlider.maxValue = Player.LocalPlayer.sync_maxSaturation;
+        healthSlider.maxValue = Player.LocalPlayer.Vitals.sync_maxHealth;
+        hydrationSlider.maxValue = Player.LocalPlayer.Vitals.sync_maxHydration;
+        saturationSlider.maxValue = Player.LocalPlayer.Vitals.sync_maxSaturation;
 
-        if (Player.LocalPlayer.sync_isHeadhunter)
+        if (Player.LocalPlayer.IsHeadhunter)
         {
             modeSwitchTimeLeftSlider.minValue = 0;
             modeSwitchTimeLeftSlider.maxValue = Headhunter.MinimumDelayBetweenTransitions;
@@ -147,9 +156,9 @@ public class IngameUIManager : SingletonBehaviour<IngameUIManager>
         interactText.gameObject.SetActive(visible);
     }
 
-    public void NotifyPlayerOfDeath(Player.DamageSource deathCause, float playerRespawnTime)
+    private void NotifyPlayerOfDeath(PlayerDamageSource deathCause)
     {
-        StartCoroutine(NotifyDeath(deathCause, playerRespawnTime));
+        StartCoroutine(NotifyDeath(deathCause, Constants.PlayerRespawnTime));
         
         statsPanelRoot.SetActive(false);
     }
@@ -160,16 +169,16 @@ public class IngameUIManager : SingletonBehaviour<IngameUIManager>
     /// <param name="deathCause">Determines the text shown</param>
     /// <param name="playerRespawnTime">Time after the player will be respawned</param>
     /// <returns></returns>
-    private IEnumerator NotifyDeath(Player.DamageSource deathCause, float playerRespawnTime)
+    private IEnumerator NotifyDeath(PlayerDamageSource deathCause, float playerRespawnTime)
     {
         // Select the correct death text based on the latest damage source
         string deathText = deathCause switch
         {
-            Player.DamageSource.Headhunter => "You have been killed by a headhunter.",
-            Player.DamageSource.Player => "You have been killed by a fellow survivor.",
-            Player.DamageSource.Hunger => "You have starved to death.",
-            Player.DamageSource.Thirst => "You have died due to dehydration.",
-            Player.DamageSource.Server => "You have been killed by the server.",
+            PlayerDamageSource.Headhunter => "You have been killed by a headhunter.",
+            PlayerDamageSource.Player => "You have been killed by a fellow survivor.",
+            PlayerDamageSource.Hunger => "You have starved to death.",
+            PlayerDamageSource.Thirst => "You have died due to dehydration.",
+            PlayerDamageSource.Server => "You have been killed by the server.",
             _ => "You have been killed by unknown reasons."
         };
 
@@ -191,8 +200,8 @@ public class IngameUIManager : SingletonBehaviour<IngameUIManager>
     {
         yield return new WaitForSecondsRealtime(roleDisplayDelayTime);
         
-        roleDisplayText.color = Player.LocalPlayer.sync_isHeadhunter ? headhunterColor : survivorColor;
-        roleDisplayText.text = Player.LocalPlayer.sync_isHeadhunter ? headhunterRoleString : survivorRoleString;
+        roleDisplayText.color = Player.LocalPlayer.IsHeadhunter ? headhunterColor : survivorColor;
+        roleDisplayText.text = Player.LocalPlayer.IsHeadhunter ? headhunterRoleString : survivorRoleString;
         roleDisplayText.alpha = 0;
 
         // Fade in the text

@@ -22,12 +22,6 @@ public class PostProcessingController : SingletonBehaviour<PostProcessingControl
     [SerializeField]
     private Color headhunterAmbientLightColor;
 
-    [SerializeField]
-    private Color damageEffectColor;
-
-    [SerializeField]
-    private AnimationCurve damageEffectCurve;
-
     private Vignette headhunterVignette;
     private Vignette survivorVignette;
     private ColorAdjustments headhunterColorAdjustments;
@@ -57,10 +51,21 @@ public class PostProcessingController : SingletonBehaviour<PostProcessingControl
             headhunterColorAdjustments = hColorAdj;
         }
     }
-
-    public void OnPlayerDamaged()
+    
+    private void OnEnable()
     {
-        CameraShaker.Instance.ShakeOnce(4f, 4f, .1f, .3f);
+        EventManager.ClientEvents.OnLocalPlayerDamaged.AddListener(OnPlayerDamaged);
+    }
+
+    private void OnDisable()
+    {
+        EventManager.ClientEvents.OnLocalPlayerDamaged.RemoveListener(OnPlayerDamaged);
+    }
+
+    private void OnPlayerDamaged(PlayerDamageSource damageSource, float damageAmount)
+    {
+        CameraShaker.Instance.ShakeOnce(4f, damageAmount / 5, .1f, .3f);
+        //CameraShaker.Instance.ShakeOnce(4f, 4f, .1f, .3f);
     }
 
     public void OnHeadhunterSwitchState(Headhunter.HeadhunterState targetState, float transitionTime)
