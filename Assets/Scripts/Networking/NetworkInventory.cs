@@ -16,16 +16,11 @@ using UnityEngine;
 public class NetworkInventory : NetworkBehaviour
 {
     public static NetworkInventory LocalInventory;
-    
-    //public Transform localCarryPoint;
 
     [SerializeField]
     private KeyCode dropItemKey = KeyCode.C;
 
-    //[SyncVar]
-    //public NetworkCarriableBase sync_currentCarriableInHand;
-
-    public readonly SyncList<NetworkCarriableBase> currentlyCarriedItems = new();
+    public readonly SyncList<NetworkCarriableBase> CurrentlyCarriedItems = new();
     private Dictionary<uint, CarryPoint> carryPoints;
     private CarryPoint mainHandPoint;
     private CarryPoint offHandPoint;
@@ -94,7 +89,7 @@ public class NetworkInventory : NetworkBehaviour
 
     public bool InventoryContainsAnyOfMaterialTags(List<string> materialTags)
     {
-        foreach (NetworkCarriableBase item in currentlyCarriedItems)
+        foreach (NetworkCarriableBase item in CurrentlyCarriedItems)
         {
             if (materialTags.Contains(item.materialTag))
                 return true;
@@ -105,7 +100,7 @@ public class NetworkInventory : NetworkBehaviour
 
     public bool InventoryContainsAnyOfMaterialTags(List<string> materialTags, out NetworkCarriableBase firstMatch)
     {
-        foreach (NetworkCarriableBase item in currentlyCarriedItems)
+        foreach (NetworkCarriableBase item in CurrentlyCarriedItems)
         {
             if (materialTags.Contains(item.materialTag))
             {
@@ -116,6 +111,23 @@ public class NetworkInventory : NetworkBehaviour
 
         firstMatch = null;
         return false;
+    }
+
+    public NetworkCarriableBase GetItemCurrentlyInHand(bool includeOffhand)
+    {
+        // If not carrying an item currently, return.
+        NetworkCarriableBase carriedItem = mainHandPoint.CurrentlyCarriedItem;
+        if(carriedItem == null)
+        {
+            if (!includeOffhand) return null;
+            
+            carriedItem = offHandPoint.CurrentlyCarriedItem;
+            
+            if(carriedItem == null)
+                return null;
+        }
+
+        return carriedItem;
     }
 
     [Command(requiresAuthority = true)]
@@ -287,7 +299,7 @@ public class NetworkInventory : NetworkBehaviour
         sync_currentCarriableInHand.Server_Destroy();
         sync_currentCarriableInHand = null;*/
 
-        currentlyCarriedItems.Remove(item);
+        CurrentlyCarriedItems.Remove(item);
         item.Server_Destroy();
     }
 
@@ -302,7 +314,7 @@ public class NetworkInventory : NetworkBehaviour
         //if(carryPoint.location == CarryLocation.Hand)
         //    sync_currentCarriableInHand = item;
         item.sync_isCarriedCurrently = true;
-        currentlyCarriedItems.Add(item);
+        CurrentlyCarriedItems.Add(item);
         
         // Call functions on the carriable
         item.Server_AfterCarryStart();
@@ -324,7 +336,7 @@ public class NetworkInventory : NetworkBehaviour
         // Set SyncVars
         carriedItem.sync_isCarriedCurrently = false;
         //sync_currentCarriableInHand = null;
-        currentlyCarriedItems.Remove(carriedItem);
+        CurrentlyCarriedItems.Remove(carriedItem);
         
         // Call functions on the carriable
         carriedItem.Server_AfterCarryStop();
@@ -335,7 +347,7 @@ public class NetworkInventory : NetworkBehaviour
     [Server]
     public void Server_DropAllItems()
     {
-        foreach (NetworkCarriableBase carriedItem in currentlyCarriedItems)
+        foreach (NetworkCarriableBase carriedItem in CurrentlyCarriedItems)
         {
             if(carriedItem == null) return;
         
@@ -347,7 +359,7 @@ public class NetworkInventory : NetworkBehaviour
         
             // Set SyncVars
             carriedItem.sync_isCarriedCurrently = false;
-            currentlyCarriedItems.Remove(carriedItem);
+            CurrentlyCarriedItems.Remove(carriedItem);
         
             // Call functions on the carriable
             carriedItem.Server_AfterCarryStop();
@@ -376,7 +388,7 @@ public class NetworkInventory : NetworkBehaviour
         {
             carriedItem.sync_isCarriedCurrently = false;
             
-            currentlyCarriedItems.Remove(carriedItem);
+            CurrentlyCarriedItems.Remove(carriedItem);
         }
         
         // Call functions on the carriable

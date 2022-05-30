@@ -10,9 +10,8 @@ namespace Headhunters.Networking.Interactions
         [Tooltip("Used by the upgrade system to determine if material can be used to upgrade a building")]
         public string materialTag;
         
-        [SerializeField]
         [Tooltip("Name of this item in the carry UI")]
-        private string uiName;
+        public string uiName;
 
         [SerializeField]
         public bool canBeCarriedWhileHeadhunter;
